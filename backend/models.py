@@ -199,7 +199,7 @@ class ProductSegmentation(TenantMixin, Base):
     abc_xyz: Mapped[str] = mapped_column(String(4))
     annual_value: Mapped[float] = mapped_column(Float)
     cov: Mapped[float] = mapped_column(Float)       # coefficient of variation
-    reasoning: Mapped[str] = mapped_column(String(512))
+    reasoning: Mapped[str] = mapped_column(String())
 
 
 class ForecastOutput(TenantMixin, Base):
@@ -209,10 +209,10 @@ class ForecastOutput(TenantMixin, Base):
     location_code: Mapped[str] = mapped_column(String(32), index=True)
     period: Mapped[str] = mapped_column(String(10), index=True)
     forecast_qty: Mapped[float] = mapped_column(Float)
-    selected_model: Mapped[str] = mapped_column(String(32))
+    selected_model: Mapped[str] = mapped_column(String(64))
     mape: Mapped[float] = mapped_column(Float)
     bias: Mapped[float] = mapped_column(Float)
-    reasoning: Mapped[str] = mapped_column(String(512))
+    reasoning: Mapped[str] = mapped_column(String())
 
 
 class DemandPlan(TenantMixin, Base):
@@ -238,7 +238,7 @@ class DemandSupplyHandshake(TenantMixin, Base):
     fill_rate: Mapped[float] = mapped_column(Float)
     revenue_at_risk: Mapped[float] = mapped_column(Float)
     margin_at_risk: Mapped[float] = mapped_column(Float)
-    recommendation: Mapped[str] = mapped_column(String(256))
+    recommendation: Mapped[str] = mapped_column(String())
 
 
 class InventoryTarget(TenantMixin, Base):
@@ -251,7 +251,7 @@ class InventoryTarget(TenantMixin, Base):
     reorder_point: Mapped[float] = mapped_column(Float)
     target_inventory: Mapped[float] = mapped_column(Float)
     days_cover: Mapped[float] = mapped_column(Float)
-    reasoning: Mapped[str] = mapped_column(String(512))
+    reasoning: Mapped[str] = mapped_column(String())
 
 
 class NetRequirement(TenantMixin, Base):
@@ -266,7 +266,7 @@ class NetRequirement(TenantMixin, Base):
     scheduled_receipts: Mapped[float] = mapped_column(Float)
     net_requirement: Mapped[float] = mapped_column(Float)
     planned_order: Mapped[float] = mapped_column(Float)
-    reasoning: Mapped[str] = mapped_column(String(512))
+    reasoning: Mapped[str] = mapped_column(String())
 
 
 class PlanningPriority(TenantMixin, Base):
@@ -275,7 +275,7 @@ class PlanningPriority(TenantMixin, Base):
     item_code: Mapped[str] = mapped_column(String(32), index=True)
     score: Mapped[float] = mapped_column(Float)
     rank: Mapped[int] = mapped_column(Integer)
-    reasoning: Mapped[str] = mapped_column(String(512))
+    reasoning: Mapped[str] = mapped_column(String())
 
 
 class SupplyRequirement(TenantMixin, Base):
@@ -324,10 +324,10 @@ class SolverExplanation(TenantMixin, Base):
     __tablename__ = "solver_explanations"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     scenario: Mapped[str] = mapped_column(String(32), index=True)
-    objective: Mapped[str] = mapped_column(String(32))
+    objective: Mapped[str] = mapped_column(String())
     objective_value: Mapped[float] = mapped_column(Float)
     status: Mapped[str] = mapped_column(String(32))
-    reasoning: Mapped[str] = mapped_column(String(1024))
+    reasoning: Mapped[str] = mapped_column(String())
 
 
 # ----------------------------------------------------------------------------
