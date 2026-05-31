@@ -5,6 +5,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend ./backend
 COPY planning ./planning
 COPY optimization ./optimization
+COPY ai ./ai
+COPY scripts ./scripts
 COPY datasets ./datasets
 COPY Pravah_Client_Template.xlsx .
 EXPOSE 8000
