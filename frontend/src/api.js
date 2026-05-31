@@ -18,6 +18,14 @@ export const api = {
   capacity: (t = 'apex') => get(`/capacity?tenant=${t}`),
   optimizer: (t = 'apex') => get(`/optimizer?tenant=${t}`),
   master: (table, t = 'apex') => get(`/master/${table}?tenant=${t}`),
+  copilot: async (question, tenant = 'apex') => {
+    const r = await fetch(`${BASE}/copilot`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, tenant }),
+    })
+    if (!r.ok) throw new Error(`${r.status}`)
+    return r.json()
+  },
   resetDemo: (t = 'apex') => fetch(`${BASE}/reset-demo?tenant=${t}`, { method: 'POST' }).then(r => r.json()),
   templateUrl: `${BASE}/template`,
   upload: async (fileObj, tenant) => {

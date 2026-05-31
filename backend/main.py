@@ -32,6 +32,8 @@ from backend.defaults import apply_defaults
 from backend.seed_loader import load as seed_synthetic
 from planning.run_all import run_pipeline
 from optimization import production_optimizer
+from ai import copilot
+from pydantic import BaseModel
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATE_PATH = os.path.join(ROOT, "Pravah_Client_Template.xlsx")
@@ -260,3 +262,15 @@ def master(table: str, tenant: str = Query(DEFAULT_TENANT)):
     with Session() as s:
         rows = s.query(model).filter_by(tenant_id=tenant).all()
         return rows_to_dicts(rows, fields)
+
+
+class CopilotQuery(BaseModel):
+    question: str
+    tenant: str = DEFAULT_TENANT
+
+
+@app.post("/api/copilot")
+def copilot_ask(q: CopilotQuery):
+    _ensure_seeded(q.tenant)
+    with Session() as s:
+        return copilot.ask(s, q.question, q.tenant)

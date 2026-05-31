@@ -59,6 +59,14 @@ j = r.json()
 check("broken upload rejected", j.get("ok") is False)
 check("rejection names the ghost ref", any("RM_GHOST" in e["message"] for e in j.get("errors", [])))
 
+# copilot — grounded answers from real data
+c.post("/api/reset-demo")
+r = c.post("/api/copilot", json={"question": "What is my revenue at risk?"}).json()
+check("copilot answers revenue-at-risk", "at risk" in r["answer"].lower() and any(ch.isdigit() for ch in r["answer"]))
+r2 = c.post("/api/copilot", json={"question": "Why is FG006 short?"}).json()
+check("copilot drills into a SKU", "FG006" in r2["answer"])
+check("copilot returns suggestions", len(r2.get("suggested", [])) > 0)
+
 passed = sum(1 for _, ok, _ in checks if ok)
 print(f"\nAPI E2E TESTS: {passed}/{len(checks)} passed\n" + "-"*50)
 failed = False

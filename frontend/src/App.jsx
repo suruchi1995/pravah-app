@@ -1,7 +1,7 @@
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Database, Layers, TrendingUp, Handshake, Boxes,
-  GitBranch, Network, Gauge, Sparkles, Building2, Upload,
+  GitBranch, Network, Gauge, Sparkles, Building2, Upload, Bot,
 } from 'lucide-react'
 import Dashboard from './pages/Dashboard.jsx'
 import DataHub from './pages/DataHub.jsx'
@@ -13,6 +13,7 @@ import Netting from './pages/Netting.jsx'
 import MRP from './pages/MRP.jsx'
 import Capacity from './pages/Capacity.jsx'
 import Optimizer from './pages/Optimizer.jsx'
+import Copilot from './pages/Copilot.jsx'
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -25,6 +26,7 @@ const NAV = [
   { to: '/mrp', label: 'Supply (MRP)', icon: Network },
   { to: '/capacity', label: 'Capacity', icon: Gauge },
   { to: '/optimizer', label: 'Optimizer', icon: Sparkles },
+  { to: '/copilot', label: 'AI Copilot', icon: Bot },
 ]
 
 export default function App() {
@@ -71,6 +73,7 @@ export default function App() {
           <Route path="/mrp" element={<MRP />} />
           <Route path="/capacity" element={<Capacity />} />
           <Route path="/optimizer" element={<Optimizer />} />
+          <Route path="/copilot" element={<Copilot />} />
         </Routes>
       </main>
     </div>

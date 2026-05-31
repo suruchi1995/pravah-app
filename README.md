@@ -49,14 +49,14 @@ scripts/        Data generation + utilities
 - [x] **BP1 — Foundation**: repo structure, synthetic Apex dataset generator, integrity suite (29/29 passing)
 - [x] **BP2 — Engines**: Postgres-first schema + seed loader + 9 planning engines + OR-Tools optimizer; pipeline smoke test 16/16
 - [x] **BP3 — API + Frontend**: data contract + strict validator (7/7), client Excel template, FastAPI (all engine endpoints + upload/validate/seed/run), full React app (10 screens, Vite/Tailwind/AG Grid/Recharts) — builds clean; API E2E 18/18
-- [ ] BP4 — AI Copilot + Control Tower + deploy + Notion sync
+- [~] **BP4 — AI Copilot + deploy**: Copilot built (grounded in stored engine outputs; LLM-backed when ANTHROPIC_API_KEY set, deterministic fallback otherwise) + Copilot screen. Remaining: live deploy + Drive/Notion sync.
 
-### Test suites (70 checks total)
+### Test suites (73 checks total)
 ```
-tests/test_dataset_integrity.py   29/29   dataset referential integrity
-tests/test_pipeline.py            16/16   engine chain produces connected output
-tests/test_validator.py            7/7    strict upload validation both directions
-tests/test_api.py                 18/18   every endpoint + upload accept/reject
+tests/test_dataset_integrity.py   29/29
+tests/test_pipeline.py            16/16
+tests/test_validator.py            7/7
+tests/test_api.py                 21/21   (includes copilot)
 ```
 
 ### Run the app locally
