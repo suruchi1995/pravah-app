@@ -8,7 +8,9 @@ services:
     envVars:
       - key: DATABASE_URL
         sync: false          # set in Render dashboard to your Neon connection string
-      - key: ANTHROPIC_API_KEY
+      - key: GROQ_API_KEY
         sync: false          # set in Render dashboard; never commit
+      - key: GROQ_MODEL
+        value: llama-3.3-70b-versatile
       - key: DEFAULT_TENANT
         value: apex

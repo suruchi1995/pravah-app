@@ -14,7 +14,7 @@ backend, which holds the key as an environment variable.
 import os, sys, re, json
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from backend import models as m
-from backend.config import DEFAULT_TENANT, ANTHROPIC_API_KEY
+from backend.config import (DEFAULT_TENANT, ANTHROPIC_API_KEY, GROQ_API_KEY, GROQ_MODEL)
 from ai.context import gather_facts, facts_for_sku, build_context_text
 
 SYSTEM = (
@@ -58,6 +58,26 @@ def _llm_answer(question, context_text):
     r.raise_for_status()
     data = r.json()
     return "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
+
+
+def _groq_answer(question, context_text):
+    """Call Groq (OpenAI-compatible chat completions). Returns text or raises."""
+    import httpx
+    payload = {
+        "model": GROQ_MODEL,
+        "max_tokens": 700,
+        "temperature": 0.2,
+        "messages": [
+            {"role": "system", "content": SYSTEM + "\n\n" + context_text},
+            {"role": "user", "content": question},
+        ],
+    }
+    headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
+    r = httpx.post("https://api.groq.com/openai/v1/chat/completions",
+                   json=payload, headers=headers, timeout=40)
+    r.raise_for_status()
+    data = r.json()
+    return data["choices"][0]["message"]["content"]
 
 
 def _rule_based_answer(question, facts, session, tenant):
@@ -122,16 +142,22 @@ def ask(session, question, tenant=DEFAULT_TENANT):
     facts = gather_facts(session, tenant)
     context_text = build_context_text(facts)
     used_llm = False
-    if ANTHROPIC_API_KEY:
+    provider = None
+    # preference: Groq, then Anthropic, then deterministic fallback
+    if GROQ_API_KEY:
         try:
-            answer = _llm_answer(question, context_text)
-            used_llm = True
+            answer = _groq_answer(question, context_text); used_llm = True; provider = "groq"
+        except Exception:
+            answer = _rule_based_answer(question, facts, session, tenant)
+    elif ANTHROPIC_API_KEY:
+        try:
+            answer = _llm_answer(question, context_text); used_llm = True; provider = "anthropic"
         except Exception:
             answer = _rule_based_answer(question, facts, session, tenant)
     else:
         answer = _rule_based_answer(question, facts, session, tenant)
     return {"answer": answer, "grounded_on": context_text, "used_llm": used_llm,
-            "suggested": SUGGESTED}
+            "provider": provider, "suggested": SUGGESTED}
 
 
 if __name__ == "__main__":
