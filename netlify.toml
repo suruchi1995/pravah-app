@@ -3,6 +3,10 @@
   command = "npm install && npm run build"
   publish = "frontend/dist"
 
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--legacy-peer-deps"
+
 # Proxy API calls to the Render backend. Replace REPLACE_WITH_RENDER_URL after deploy.
 [[redirects]]
   from = "/api/*"
