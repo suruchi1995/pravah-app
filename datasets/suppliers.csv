@@ -1,0 +1,6 @@
+tenant_id,supplier_code,supplier_name,supplier_type,lead_time_days,moq,reliability,incoterm,payment_terms,created_at,updated_at
+apex,SUP_INGA,Ingredient Supplier A,Ingredient,21,200,0.95,FOB,Net 30,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,SUP_INGB,Ingredient Supplier B,Ingredient,28,150,0.9,CIF,Net 45,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,SUP_INGC,Ingredient Supplier C,Ingredient,35,100,0.88,FOB,Net 60,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,SUP_PACKA,Packaging Supplier A,Packaging,14,500,0.96,EXW,Net 30,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,SUP_PACKB,Packaging Supplier B,Packaging,10,1000,0.93,EXW,Net 30,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z

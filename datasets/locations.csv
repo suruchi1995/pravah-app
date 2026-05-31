@@ -1,0 +1,6 @@
+tenant_id,location_code,location_name,location_type,state,zone,created_at,updated_at
+apex,PLANT_BDI,Baddi Plant,Plant,Himachal Pradesh,North,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,PLANT_PUN,Pune Plant,Plant,Maharashtra,West,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,DC_DEL,Delhi DC,DC,Delhi,North,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,DC_MUM,Mumbai DC,DC,Maharashtra,West,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,DC_BLR,Bangalore DC,DC,Karnataka,South,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z

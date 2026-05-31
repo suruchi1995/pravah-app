@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: pravah-api
+    runtime: docker
+    dockerfilePath: ./infra/Dockerfile
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false          # set in Render dashboard to your Neon connection string
+      - key: ANTHROPIC_API_KEY
+        sync: false          # set in Render dashboard; never commit
+      - key: DEFAULT_TENANT
+        value: apex
