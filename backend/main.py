@@ -47,10 +47,20 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 
 
 def _ensure_seeded(tenant):
-    """If a tenant has no items, seed synthetic Apex + run pipeline (first-run convenience)."""
+    """Self-healing: if a tenant has no items, seed synthetic Apex + run pipeline.
+    If items exist but planning outputs are missing/incomplete (e.g. a partial
+    earlier run), re-run the pipeline so every screen has data."""
     with Session() as s:
-        if s.query(m.Item).filter_by(tenant_id=tenant).count() == 0 and tenant == DEFAULT_TENANT:
-            seed_synthetic(s)
+        n_items = s.query(m.Item).filter_by(tenant_id=tenant).count()
+        if n_items == 0:
+            if tenant == DEFAULT_TENANT:
+                seed_synthetic(s)
+                run_pipeline(s, tenant)
+            return
+        # items exist — ensure planning outputs are present
+        n_scenarios = s.query(m.SolverExplanation).filter_by(tenant_id=tenant).count()
+        n_forecast = s.query(m.ForecastOutput).filter_by(tenant_id=tenant).count()
+        if n_scenarios == 0 or n_forecast == 0:
             run_pipeline(s, tenant)
 
 

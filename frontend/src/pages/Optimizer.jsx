@@ -11,15 +11,28 @@ export default function Optimizer() {
   if (loading) return <><PageHeader title="Optimization Workbench" /><Loading /></>
   if (error) return <ErrorBox msg={error} />
 
-  const scenarios = Object.keys(data)
+  const scenarios = Object.keys(data || {})
+  if (scenarios.length === 0) {
+    return (
+      <>
+        <PageHeader title="Optimization Workbench" subtitle="Google OR-Tools production plan under three objectives." />
+        <div className="p-8">
+          <div className="card p-8 text-center">
+            <p className="text-slate2 mb-2">No optimization results yet.</p>
+            <p className="text-sm text-slate2">Go to <b>Data Hub</b> and click <b>Reset demo</b> (or upload data) to run the planner, then return here.</p>
+          </div>
+        </div>
+      </>
+    )
+  }
   // build comparison: total production per scenario per SKU
-  const skus = [...new Set(Object.values(data).flatMap(s => s.plan.map(p => p.item_code)))].sort()
+  const skus = [...new Set(Object.values(data).flatMap(s => (s.plan || []).map(p => p.item_code)))].sort()
   const compare = skus.map(sku => {
     const row = { sku }
-    scenarios.forEach(sc => { row[sc] = Math.round(data[sc].plan.filter(p => p.item_code === sku).reduce((a, p) => a + p.quantity, 0)) })
+    scenarios.forEach(sc => { row[sc] = Math.round((data[sc].plan || []).filter(p => p.item_code === sku).reduce((a, p) => a + p.quantity, 0)) })
     return row
   })
-  const cur = data[sel]
+  const cur = data[sel] || data[scenarios[0]]
   const colors = { min_cost: '#2E5C8A', max_service: '#5b8a72', balanced: '#c98a3c' }
 
   return (

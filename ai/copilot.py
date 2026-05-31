@@ -143,21 +143,25 @@ def ask(session, question, tenant=DEFAULT_TENANT):
     context_text = build_context_text(facts)
     used_llm = False
     provider = None
+    provider_error = None
     # preference: Groq, then Anthropic, then deterministic fallback
     if GROQ_API_KEY:
         try:
             answer = _groq_answer(question, context_text); used_llm = True; provider = "groq"
-        except Exception:
+        except Exception as e:
+            provider_error = f"groq: {type(e).__name__}: {str(e)[:150]}"
             answer = _rule_based_answer(question, facts, session, tenant)
     elif ANTHROPIC_API_KEY:
         try:
             answer = _llm_answer(question, context_text); used_llm = True; provider = "anthropic"
-        except Exception:
+        except Exception as e:
+            provider_error = f"anthropic: {type(e).__name__}: {str(e)[:150]}"
             answer = _rule_based_answer(question, facts, session, tenant)
     else:
+        provider_error = "no LLM key set (GROQ_API_KEY / ANTHROPIC_API_KEY)"
         answer = _rule_based_answer(question, facts, session, tenant)
     return {"answer": answer, "grounded_on": context_text, "used_llm": used_llm,
-            "provider": provider, "suggested": SUGGESTED}
+            "provider": provider, "provider_error": provider_error, "suggested": SUGGESTED}
 
 
 if __name__ == "__main__":
