@@ -124,12 +124,36 @@ def _seed_from_tables(session, tables, tenant):
     session.commit()
 
 
+import threading
+
+# tracks long-running jobs per tenant: 'running' | 'done' | 'error: ...'
+_JOB_STATUS = {}
+
+def _run_reset(tenant):
+    try:
+        with Session() as s:
+            seed_synthetic(s)
+            run_pipeline(s, tenant)
+        _JOB_STATUS[tenant] = "done"
+    except Exception as e:
+        _JOB_STATUS[tenant] = f"error: {type(e).__name__}: {str(e)[:200]}"
+
+
 @app.post("/api/reset-demo")
 def reset_demo(tenant: str = Query(DEFAULT_TENANT)):
-    with Session() as s:
-        seed_synthetic(s)
-        res = run_pipeline(s, tenant)
-    return {"ok": True, "pipeline": res}
+    # kick off the heavy reseed+pipeline in the background and return immediately,
+    # so the request never times out on free-tier hardware.
+    if _JOB_STATUS.get(tenant) == "running":
+        return {"ok": True, "status": "running", "message": "A reset is already in progress."}
+    _JOB_STATUS[tenant] = "running"
+    threading.Thread(target=_run_reset, args=(tenant,), daemon=True).start()
+    return {"ok": True, "status": "running",
+            "message": "Reset started. This rebuilds all plans and the optimizer — about 30-90s. Refresh the screens shortly."}
+
+
+@app.get("/api/reset-status")
+def reset_status(tenant: str = Query(DEFAULT_TENANT)):
+    return {"tenant": tenant, "status": _JOB_STATUS.get(tenant, "idle")}
 
 
 # ---------------- read endpoints ----------------

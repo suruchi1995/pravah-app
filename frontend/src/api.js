@@ -27,6 +27,7 @@ export const api = {
     return r.json()
   },
   resetDemo: (t = 'apex') => fetch(`${BASE}/reset-demo?tenant=${t}`, { method: 'POST' }).then(r => r.json()),
+  resetStatus: (t = 'apex') => fetch(`${BASE}/reset-status?tenant=${t}`).then(r => r.json()),
   templateUrl: `${BASE}/template`,
   upload: async (fileObj, tenant) => {
     const fd = new FormData()

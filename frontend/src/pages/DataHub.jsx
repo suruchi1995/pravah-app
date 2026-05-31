@@ -20,7 +20,33 @@ export default function DataHub() {
     } catch (err) { setResult({ ok: false, errors: [{ sheet: '-', message: err.message }] }) }
     setBusy(false); e.target.value = ''
   }
-  async function reset() { setBusy(true); await api.resetDemo(); setBusy(false); setResult({ ok: true, message: 'Demo data restored.' }) }
+  async function reset() {
+    setBusy(true); setResult(null)
+    try {
+      await api.resetDemo()
+      setResult({ ok: true, message: 'Rebuilding all plans and the optimizer — this takes ~30–90s. Please wait…' })
+      // poll until the background job finishes
+      const start = Date.now()
+      const poll = setInterval(async () => {
+        try {
+          const st = await api.resetStatus()
+          if (st.status === 'done') {
+            clearInterval(poll); setBusy(false)
+            setResult({ ok: true, message: 'Demo data rebuilt. All screens are refreshed.' })
+          } else if (st.status && st.status.startsWith('error')) {
+            clearInterval(poll); setBusy(false)
+            setResult({ ok: false, errors: [{ sheet: '-', message: st.status }] })
+          } else if (Date.now() - start > 180000) {
+            clearInterval(poll); setBusy(false)
+            setResult({ ok: true, message: 'Still working in the background — refresh the screens in a moment.' })
+          }
+        } catch { /* keep polling */ }
+      }, 4000)
+    } catch (err) {
+      setBusy(false)
+      setResult({ ok: false, errors: [{ sheet: '-', message: err.message }] })
+    }
+  }
 
   const cols = (data.data && data.data[0]) ? Object.keys(data.data[0]).map(k => ({ field: k })) : []
 
