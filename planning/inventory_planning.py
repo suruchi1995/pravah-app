@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from backend import models as m
 from backend.config import DEFAULT_TENANT
 
-LEAD_TIME_MONTHS = 0.5   # DC replenishment lead time assumption
+LEAD_TIME_MONTHS_UNUSED = 0.5
 
 # inverse normal CDF (Acklam approximation) for service-level -> z
 def z_from_service(p):
@@ -38,6 +38,8 @@ def z_from_service(p):
 
 
 def run(session, tenant=DEFAULT_TENANT):
+    from backend.parameters import get_param
+    LT = get_param(session, "lead_time_months_dc", tenant)
     svc = {r.item_code: r.target_service_level for r in session.query(m.ServiceLevel).filter_by(tenant_id=tenant)}
 
     # recent demand history std per (item, loc)
@@ -58,12 +60,12 @@ def run(session, tenant=DEFAULT_TENANT):
         series = [q for _, q in sorted(hist.get(key, []))][-12:]   # last 12 months
         sigma = statistics.pstdev(series) if len(series) > 1 else 0.0
         z = z_from_service(svc.get(item, 0.95))
-        ss = z * sigma * math.sqrt(LEAD_TIME_MONTHS)
-        rop = avg * LEAD_TIME_MONTHS + ss
+        ss = z * sigma * math.sqrt(LT)
+        rop = avg * LT + ss
         target = rop + avg
         days = (target / (avg / 30)) if avg else 0.0
         reason = (f"z={z:.2f} (SL {svc.get(item,0.95):.0%}), sigma={sigma:.0f}/mo, "
-                  f"LT={LEAD_TIME_MONTHS}mo -> SS={ss:.0f}; ROP={rop:.0f}; "
+                  f"LT={LT}mo -> SS={ss:.0f}; ROP={rop:.0f}; "
                   f"target(order-up-to)={target:.0f} ~ {days:.0f} days cover.")
         rows.append(m.InventoryTarget(
             tenant_id=tenant, item_code=item, location_code=loc,

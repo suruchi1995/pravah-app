@@ -55,10 +55,10 @@ b["demand_history"] = dh[~((dh["item_code"] == "FG001") & (dh["location_code"] =
 r = validate(b)
 check("incomplete demand history rejected", not r["ok"] and any("FG001" in e["message"] for e in r["errors"]))
 
-# 7. optional sheet missing -> warning not error
-b = load_sheets(); del b["routing"]
+# 7. optional sheet missing -> warning not error (transport_modes is still optional)
+b = load_sheets(); del b["transport_modes"]
 r = validate(b)
-check("missing optional sheet -> warning only", r["ok"] and any(w["sheet"] == "routing" for w in r["warnings"]))
+check("missing optional sheet -> warning only", r["ok"] and any(w["sheet"] == "transport_modes" for w in r["warnings"]))
 
 passed = sum(1 for _, ok, _ in checks if ok)
 print(f"\nVALIDATOR TESTS: {passed}/{len(checks)} passed\n" + "-"*50)

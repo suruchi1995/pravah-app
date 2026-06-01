@@ -13,10 +13,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from backend import models as m
 from backend.config import DEFAULT_TENANT
 
-DEFAULT_MOQ = 50
+DEFAULT_MOQ_UNUSED = 50
 
 
 def run(session, tenant=DEFAULT_TENANT):
+    from backend.parameters import get_param
+    MOQ = get_param(session, "default_moq", tenant)
     items = {it.item_code: it for it in session.query(m.Item).filter_by(tenant_id=tenant)}
     fgs = [c for c, it in items.items() if it.item_type == "FG"]
 
@@ -48,18 +50,18 @@ def run(session, tenant=DEFAULT_TENANT):
     for fg in fgs:
         proj = onhand0[fg]              # running projected on-hand
         safety = ss[fg]
-        moq = items[fg].unit_price_or_cost and DEFAULT_MOQ or DEFAULT_MOQ
+        moq = items[fg].unit_price_or_cost and MOQ or MOQ
         for p in periods:
             gr = gross[fg].get(p, 0.0)
             sr = receipts[fg].get(p, 0.0)
             net = gr + safety - proj - sr
             if net > 0:
-                planned = math.ceil(net / DEFAULT_MOQ) * DEFAULT_MOQ
+                planned = math.ceil(net / MOQ) * MOQ
             else:
                 planned = 0.0
             reason = (f"Gross {gr:.0f} + SS {safety:.0f} - on-hand {proj:.0f} "
                       f"- receipts {sr:.0f} = net {net:.0f}; "
-                      f"planned order (CEIL to MOQ {DEFAULT_MOQ}) = {planned:.0f}.")
+                      f"planned order (CEIL to MOQ {MOQ}) = {planned:.0f}.")
             rows.append(m.NetRequirement(
                 tenant_id=tenant, item_code=fg, location_code="ALL", period=p,
                 gross_requirement=round(gr,2), safety_stock=round(safety,2),

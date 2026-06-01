@@ -330,6 +330,38 @@ class SolverExplanation(TenantMixin, Base):
     reasoning: Mapped[str] = mapped_column(String())
 
 
+class DemandOverride(TenantMixin, Base):
+    """Planner/data-driven demand adjustments. Source of the override (UI or upload),
+    so NOTHING is hardcoded. consensus uses these when present.
+    override_type: 'absolute' (set qty directly) or 'uplift_pct' (e.g. 25 = +25% on forecast)."""
+    __tablename__ = "demand_overrides"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    item_code: Mapped[str] = mapped_column(String(32), index=True)
+    location_code: Mapped[str] = mapped_column(String(32), index=True)
+    period: Mapped[str] = mapped_column(String(10), index=True)
+    override_qty: Mapped[float] = mapped_column(Float)
+    override_type: Mapped[str] = mapped_column(String(12), default="absolute")
+    reason: Mapped[str] = mapped_column(String(), default="")
+    source: Mapped[str] = mapped_column(String(12), default="planner")  # planner | upload
+
+
+class Parameter(TenantMixin, Base):
+    """Every tunable value lives here as DATA, never hardcoded.
+    source: 'client' (uploaded) | 'derived' (computed w/ assumption) | 'planner' (UI override).
+    scope: 'global' or an item_code / resource_code the parameter applies to.
+    assumption: human-readable note shown in the UI when source='derived'.
+    """
+    __tablename__ = "parameters"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(64), index=True)     # e.g. forecast_holdout, holding_cost_pct
+    scope: Mapped[str] = mapped_column(String(48), default="global", index=True)
+    value: Mapped[str] = mapped_column(String())                  # stored as text, cast on read
+    value_type: Mapped[str] = mapped_column(String(12), default="float")  # float/int/str/bool
+    source: Mapped[str] = mapped_column(String(12), default="derived")
+    assumption: Mapped[str] = mapped_column(String(), default="")
+    editable: Mapped[bool] = mapped_column(default=True)
+
+
 # ----------------------------------------------------------------------------
 # Engine / session factory
 # ----------------------------------------------------------------------------

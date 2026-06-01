@@ -15,6 +15,11 @@ from backend.config import DEFAULT_TENANT
 
 
 def run(session, tenant=DEFAULT_TENANT):
+    from backend.parameters import get_param
+    A_CUT = get_param(session, "abc_a_cutoff", tenant)
+    B_CUT = get_param(session, "abc_b_cutoff", tenant)
+    X_CUT = get_param(session, "xyz_x_cutoff", tenant)
+    Y_CUT = get_param(session, "xyz_y_cutoff", tenant)
     # gather FG monthly totals (sum across DCs)
     items = {it.item_code: it for it in session.query(m.Item).filter_by(tenant_id=tenant)}
     fgs = [c for c, it in items.items() if it.item_type == "FG"]
@@ -42,10 +47,10 @@ def run(session, tenant=DEFAULT_TENANT):
     for fg in ranked:
         cum += values[fg]
         share = cum / total_value
-        abc[fg] = "A" if share <= 0.80 else ("B" if share <= 0.95 else "C")
+        abc[fg] = "A" if share <= A_CUT else ("B" if share <= B_CUT else "C")
 
     def xyz_of(c):
-        return "X" if c <= 0.25 else ("Y" if c <= 0.50 else "Z")
+        return "X" if c <= X_CUT else ("Y" if c <= Y_CUT else "Z")
 
     # wipe + write
     session.query(m.ProductSegmentation).filter_by(tenant_id=tenant).delete()

@@ -410,6 +410,18 @@ def build_sales_orders():
 # --------------------------------------------------------------------------
 def build_parameters():
     paths = []
+    # demand overrides — a sample promo, as DATA (planner-editable), not hardcoded in engine
+    # FG006 pre-workout launch campaign: uplift first two plan months at each DC.
+    months = list(month_iter(PLAN_START, 2))
+    rows = []
+    for i, mdate in enumerate(months):
+        uplift = 25 if i == 0 else 15   # +25% then +15% on the statistical forecast
+        for dc in DC_SHARE:
+            rows.append([TENANT_ID, "FG006", dc, mdate.isoformat(),
+                         uplift, "uplift_pct", "Pre-workout launch campaign", "upload"])
+    paths.append(write_csv("demand_overrides.csv",
+        ["tenant_id","item_code","location_code","period","override_qty","override_type","reason","source"], rows))
+
     # service levels per FG (drives safety stock z-factor downstream)
     rows = []
     for code, name, cat, base, trend, amp, abc, price in FINISHED_GOODS:

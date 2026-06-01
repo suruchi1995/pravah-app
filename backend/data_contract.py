@@ -62,14 +62,14 @@ CONTRACT = {
         "numeric_cols": ["unit_price", "moq", "lead_time_days"],
         "fk": {"supplier_code": "suppliers.supplier_code", "item_code": "items.item_code"},
     },
-    # -------- optional (auto-defaulted) --------
+    # -------- required real constraints (never faked) --------
     "resources": {
-        "required": False,
+        "required": True,
         "columns": ["resource_code", "resource_name", "plant_code", "hours_per_month"],
         "key_cols": ["resource_code"], "numeric_cols": ["hours_per_month"],
     },
     "routing": {
-        "required": False,
+        "required": True,
         "columns": ["item_code", "resource_code", "runtime_hr_per_unit"],
         "key_cols": ["item_code", "resource_code"], "numeric_cols": ["runtime_hr_per_unit"],
     },
@@ -92,6 +92,11 @@ CONTRACT = {
         "required": False,
         "columns": ["item_code", "min_months_cover", "max_months_cover"],
         "key_cols": ["item_code"], "numeric_cols": ["min_months_cover", "max_months_cover"],
+    },
+    "demand_overrides": {
+        "required": False,
+        "columns": ["item_code", "location_code", "period", "override_qty", "override_type", "reason", "source"],
+        "key_cols": ["item_code", "location_code", "period"], "numeric_cols": ["override_qty"],
     },
     "purchase_orders": {
         "required": False,

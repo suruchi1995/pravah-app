@@ -68,6 +68,10 @@ LOADERS = [
         "so_number": ("so_number", s), "item_code": ("item_code", s),
         "location_code": ("location_code", s), "quantity": ("quantity", f),
         "required_date": ("required_date", s), "priority": ("priority", s), "status": ("status", s)}),
+    ("demand_overrides.csv", m.DemandOverride, {
+        "item_code": ("item_code", s), "location_code": ("location_code", s),
+        "period": ("period", s), "override_qty": ("override_qty", f),
+        "override_type": ("override_type", s), "reason": ("reason", s), "source": ("source", s)}),
     ("service_levels.csv", m.ServiceLevel, {
         "item_code": ("item_code", s), "target_service_level": ("target_service_level", f)}),
     ("costs.csv", m.Cost, {

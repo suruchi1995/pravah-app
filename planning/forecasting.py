@@ -101,6 +101,24 @@ def _mape_bias(actual, predicted):
 
 
 def run(session, tenant=DEFAULT_TENANT):
+    from backend.parameters import get_param
+    HOLDOUT = get_param(session, "forecast_holdout_months", tenant)
+    HORIZON = get_param(session, "forecast_horizon_months", tenant)
+    SEASON_P = get_param(session, "forecast_season_length", tenant)
+    ses_a = get_param(session, "ses_alpha", tenant)
+    hw_a = get_param(session, "hw_alpha", tenant)
+    hw_b = get_param(session, "hw_beta", tenant)
+    hw_g = get_param(session, "hw_gamma", tenant)
+
+    # parameterised model set (reads tunables from the registry, nothing hardcoded)
+    models = {
+        "MovingAverage":     lambda tr: fit_ma(tr),
+        "WeightedMA":        lambda tr: fit_wma(tr),
+        "SES":               lambda tr: fit_ses(tr, alpha=ses_a),
+        "HoltWinters":       lambda tr: fit_holt_winters(tr, alpha=hw_a, beta=hw_b, gamma=hw_g, season=SEASON_P),
+        "LinearRegression":  lambda tr: fit_linreg(tr),
+    }
+
     # build (item, loc) -> ordered monthly series
     series = defaultdict(dict)
     for d in session.query(m.DemandHistory).filter_by(tenant_id=tenant):
@@ -116,7 +134,7 @@ def run(session, tenant=DEFAULT_TENANT):
         train, test = values[:-HOLDOUT], values[-HOLDOUT:]
 
         scores = {}
-        for name, fitter in MODELS.items():
+        for name, fitter in models.items():
             f = fitter(train)
             preds = [f(h) for h in range(1, HOLDOUT + 1)]
             mape, bias = _mape_bias(test, preds)
@@ -125,8 +143,7 @@ def run(session, tenant=DEFAULT_TENANT):
         best = min(scores, key=lambda k: scores[k][0])
         best_mape, best_bias = scores[best]
 
-        # refit on full series, project forward
-        f_full = MODELS[best](values)
+        f_full = models[best](values)
         fut_periods = _next_periods(periods[-1], HORIZON)
         ranked = sorted(scores.items(), key=lambda kv: kv[1][0])
         runner = ranked[1][0] if len(ranked) > 1 else best

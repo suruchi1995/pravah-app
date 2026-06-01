@@ -72,6 +72,8 @@ def _gather(session, tenant):
 
 
 def optimize(session, scenario="min_cost", tenant=DEFAULT_TENANT):
+    from backend.parameters import get_param
+    SHORTAGE_PENALTY_MULT = get_param(session, "shortage_penalty_mult", tenant)
     (items, fgs, cost, demand, periods, open_inv, receipts, ss, routing, avail) = _gather(session, tenant)
     solver = pywraplp.Solver.CreateSolver("CBC")
     if solver is None:
