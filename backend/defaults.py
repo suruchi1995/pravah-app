@@ -43,21 +43,10 @@ def apply_defaults(tables: dict) -> dict:
             {"mode_code": "ROAD", "mode_name": "Road", "lead_time_days": 4, "cost_per_kg": 6.0},
             {"mode_code": "AIR", "mode_name": "Air", "lead_time_days": 1, "cost_per_kg": 35.0}]
 
-    # resources: one ample default line per plant if none given
-    if not tables.get("resources"):
-        plant_code = plants[0]["location_code"] if plants else "PLANT_01"
-        tables["resources"] = [
-            {"resource_code": "DEFAULT_LINE", "resource_name": "Default Production Line",
-             "plant_code": plant_code, "hours_per_month": 100000.0}]
+    # resources / routing: NEVER faked. If absent, capacity planning is disabled
+    # downstream (see capabilities). We do not invent a line or its hours.
 
-    # routing: nominal runtime so capacity is computed but non-binding
-    if not tables.get("routing"):
-        res = tables["resources"][0]["resource_code"]
-        tables["routing"] = [
-            {"item_code": r["item_code"], "resource_code": res, "runtime_hr_per_unit": 0.01}
-            for r in fgs + sfgs]
-
-    # open orders default empty
+    # open orders default empty (safe — absence genuinely means none open)
     for opt in ("purchase_orders", "production_orders", "sales_orders"):
         tables.setdefault(opt, [])
 

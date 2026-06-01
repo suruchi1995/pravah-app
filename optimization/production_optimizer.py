@@ -99,15 +99,18 @@ def optimize(session, scenario="min_cost", tenant=DEFAULT_TENANT):
             solver.Add(short[i, t] <= d)
             prev = inv[i, t]
 
-    # capacity per resource per period
-    resources = set()
-    for i in fgs:
-        resources |= set(routing[i].keys())
-    for t in periods:
-        for res in resources:
-            terms = [produce[i, t] * routing[i][res] for i in fgs if res in routing[i]]
-            if terms:
-                solver.Add(solver.Sum(terms) <= avail.get(res, 0.0))
+    # capacity per resource per period — ONLY if real resource/routing data exists.
+    # Without it we optimise unconstrained (never invent capacity limits).
+    capacity_constrained = bool(avail) and any(routing[i] for i in fgs)
+    if capacity_constrained:
+        resources = set()
+        for i in fgs:
+            resources |= set(routing[i].keys())
+        for t in periods:
+            for res in resources:
+                terms = [produce[i, t] * routing[i][res] for i in fgs if res in routing[i]]
+                if terms:
+                    solver.Add(solver.Sum(terms) <= avail.get(res, 0.0))
 
     # objective components
     prod_cost = solver.Sum(
@@ -166,7 +169,9 @@ def optimize(session, scenario="min_cost", tenant=DEFAULT_TENANT):
     reason = (f"{obj_label}. Status={status_str}. "
               f"Total production={total_prod:,.0f} units over {len(periods)} periods; "
               f"total shortage={total_sh:,.0f} (fill {fill:.1%}). "
-              f"Binding constraint context: filling line is the tightest resource.")
+              + ("Capacity-constrained (real resource/routing data)."
+                 if capacity_constrained else
+                 "UNCONSTRAINED — no capacity data provided; upload resources + routing to optimise against real line limits."))
     session.query(m.SolverExplanation).filter_by(tenant_id=tenant, scenario=scenario).delete()
     session.add(m.SolverExplanation(
         tenant_id=tenant, scenario=scenario, objective=obj_label,

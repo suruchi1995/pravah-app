@@ -298,6 +298,14 @@ def master(table: str, tenant: str = Query(DEFAULT_TENANT)):
         return rows_to_dicts(rows, fields)
 
 
+@app.get("/api/capabilities")
+def capabilities(tenant: str = Query(DEFAULT_TENANT)):
+    _ensure_seeded(tenant)
+    from backend import capabilities as cap
+    with Session() as s:
+        return cap.compute(s, tenant)
+
+
 class CopilotQuery(BaseModel):
     question: str
     tenant: str = DEFAULT_TENANT

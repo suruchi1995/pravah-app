@@ -62,14 +62,18 @@ CONTRACT = {
         "numeric_cols": ["unit_price", "moq", "lead_time_days"],
         "fk": {"supplier_code": "suppliers.supplier_code", "item_code": "items.item_code"},
     },
-    # -------- required real constraints (never faked) --------
+    # -------- strongly recommended: real constraints (used if given, NEVER faked) --------
+    # If absent, capacity planning + constrained optimization are DISABLED and flagged,
+    # rather than invented. Everything upstream still runs.
     "resources": {
-        "required": True,
+        "required": False,
+        "recommended": True,
         "columns": ["resource_code", "resource_name", "plant_code", "hours_per_month"],
         "key_cols": ["resource_code"], "numeric_cols": ["hours_per_month"],
     },
     "routing": {
-        "required": True,
+        "required": False,
+        "recommended": True,
         "columns": ["item_code", "resource_code", "runtime_hr_per_unit"],
         "key_cols": ["item_code", "resource_code"], "numeric_cols": ["runtime_hr_per_unit"],
     },

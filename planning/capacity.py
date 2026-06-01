@@ -18,8 +18,14 @@ from backend.config import DEFAULT_TENANT
 
 def run(session, tenant=DEFAULT_TENANT):
     resources = {r.resource_code: r for r in session.query(m.Resource).filter_by(tenant_id=tenant)}
+    routing_rows = session.query(m.Routing).filter_by(tenant_id=tenant).all()
+    # Capability gate: never fake capacity. If no real data, write nothing and report 0.
+    if not resources or not routing_rows:
+        session.query(m.CapacityLoad).filter_by(tenant_id=tenant).delete()
+        session.commit()
+        return 0
     routing = defaultdict(list)   # item -> [(resource, hr_per_unit)]
-    for rt in session.query(m.Routing).filter_by(tenant_id=tenant):
+    for rt in routing_rows:
         routing[rt.item_code].append((rt.resource_code, rt.runtime_hr_per_unit))
 
     # planned production qty by item x period
