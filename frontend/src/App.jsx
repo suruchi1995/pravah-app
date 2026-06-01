@@ -1,7 +1,7 @@
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Database, Layers, TrendingUp, Handshake, Boxes,
-  GitBranch, Network, Gauge, Sparkles, Building2, Upload, Bot,
+  GitBranch, Network, Gauge, Sparkles, Building2, Upload, Bot, Share2,
 } from 'lucide-react'
 import Dashboard from './pages/Dashboard.jsx'
 import DataHub from './pages/DataHub.jsx'
@@ -14,10 +14,12 @@ import MRP from './pages/MRP.jsx'
 import Capacity from './pages/Capacity.jsx'
 import Optimizer from './pages/Optimizer.jsx'
 import Copilot from './pages/Copilot.jsx'
+import NetworkPage from './pages/Network.jsx'
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/data', label: 'Data Hub', icon: Database },
+  { to: '/network', label: 'Network', icon: Share2 },
   { to: '/segmentation', label: 'Segmentation', icon: Layers },
   { to: '/forecast', label: 'Forecast', icon: TrendingUp },
   { to: '/handshake', label: 'Demand–Supply', icon: Handshake },
@@ -65,6 +67,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/data" element={<DataHub />} />
+          <Route path="/network" element={<NetworkPage />} />
           <Route path="/segmentation" element={<Segmentation />} />
           <Route path="/forecast" element={<Forecast />} />
           <Route path="/handshake" element={<HandshakePage />} />

@@ -1,14 +1,20 @@
+import { useState } from 'react'
 import { api } from '../api'
 import { useAsync, PageHeader, Grid, Loading, ErrorBox, fmtMoney } from '../components/ui'
+import { FilterBar, rowPasses, deriveOptions } from '../components/FilterBar'
 
 export default function Segmentation() {
   const { loading, data, error } = useAsync(() => api.segmentation())
+  const [filters, setFilters] = useState({ items: [], locations: [], periods: [] })
   if (loading) return <><PageHeader title="Segmentation" /><Loading /></>
   if (error) return <ErrorBox msg={error} />
 
+  const cfg = deriveOptions(data, { item: true, location: false, period: false })
+  const rows = data.filter(r => rowPasses(r, filters))
+
   const cells = {}
   for (const a of ['A', 'B', 'C']) for (const x of ['X', 'Y', 'Z']) cells[a + x] = []
-  data.forEach(r => cells[r.abc_xyz]?.push(r.item_code))
+  rows.forEach(r => cells[r.abc_xyz]?.push(r.item_code))
 
   const cols = [
     { field: 'item_code', headerName: 'SKU', maxWidth: 110 },
@@ -22,6 +28,7 @@ export default function Segmentation() {
   return (
     <>
       <PageHeader title="Segmentation" subtitle="ABC by annual value, XYZ by demand variability — computed from history, not assigned." />
+      <FilterBar config={cfg} value={filters} onChange={setFilters} />
       <div className="p-8 space-y-6">
         <div className="card p-6">
           <h3 className="font-display text-xl mb-4">ABC × XYZ matrix</h3>
@@ -44,7 +51,7 @@ export default function Segmentation() {
             ))}
           </div>
         </div>
-        <div className="card p-5"><Grid rows={data} columns={cols} /></div>
+        <div className="card p-5"><Grid rows={rows} columns={cols} /></div>
       </div>
     </>
   )

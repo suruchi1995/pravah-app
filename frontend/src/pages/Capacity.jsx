@@ -1,20 +1,29 @@
+import { useState } from 'react'
 import { api } from '../api'
 import { useAsync, PageHeader, Grid, Loading, ErrorBox, fmtPct } from '../components/ui'
+import { FilterBar, rowPasses } from '../components/FilterBar'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, Cell } from 'recharts'
 
 export default function Capacity() {
   const { loading, data, error } = useAsync(() => api.capacity())
+  const [filters, setFilters] = useState({ items: [], locations: [], periods: [] })
   if (loading) return <><PageHeader title="Capacity Planning" /><Loading /></>
   if (error) return <ErrorBox msg={error} />
 
-  const periods = [...new Set(data.map(r => r.period))].sort()
+  // capacity rows use resource_code + period; build filter config for resource + period
+  const cfg = {
+    items: [...new Set(data.map(r => r.resource_code))].sort(),
+    periods: [...new Set(data.map(r => r.period))].sort(),
+  }
+  const rows = data.filter(r => rowPasses(r, filters, { itemKey: 'resource_code', locKey: '_none', perKey: 'period' }))
+
+  const periods = [...new Set(rows.map(r => r.period))].sort()
   const p0 = periods[0]
-  const first = data.filter(r => r.period === p0).map(r => ({
+  const first = rows.filter(r => r.period === p0).map(r => ({
     resource: r.resource_code.replace('_LINE', '').replace('_01', '1').replace('_02', '2'),
     util: Math.round(r.utilization * 100), status: r.constraint_status,
   }))
   const barColor = s => s === 'OVERLOADED' ? '#b5544a' : s === 'TIGHT' ? '#c98a3c' : '#5b8a72'
-
   const statusCell = p => <span style={{ color: barColor(p.value), fontWeight: 600 }}>{p.value}</span>
   const cols = [
     { field: 'resource_code', headerName: 'Resource' },
@@ -27,6 +36,7 @@ export default function Capacity() {
   return (
     <>
       <PageHeader title="Capacity Planning" subtitle="Finite-capacity load by resource. The binding constraint sets the ceiling the optimizer must plan around." />
+      <FilterBar config={{ items: cfg.items, periods: cfg.periods }} value={filters} onChange={setFilters} />
       <div className="p-8 space-y-6">
         <div className="card p-6">
           <h3 className="font-display text-xl mb-4">Resource utilisation — {p0?.slice(0,7)}</h3>
@@ -44,7 +54,7 @@ export default function Capacity() {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="card p-5"><Grid rows={data} columns={cols} /></div>
+        <div className="card p-5"><Grid rows={rows} columns={cols} /></div>
       </div>
     </>
   )

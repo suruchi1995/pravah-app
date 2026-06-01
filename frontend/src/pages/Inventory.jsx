@@ -1,10 +1,15 @@
+import { useState } from 'react'
 import { api } from '../api'
 import { useAsync, PageHeader, Grid, Loading, ErrorBox } from '../components/ui'
+import { FilterBar, rowPasses, deriveOptions } from '../components/FilterBar'
 
 export default function Inventory() {
   const { loading, data, error } = useAsync(() => api.inventoryTargets())
+  const [filters, setFilters] = useState({ items: [], locations: [], periods: [] })
   if (loading) return <><PageHeader title="Inventory Planning" /><Loading /></>
   if (error) return <ErrorBox msg={error} />
+  const cfg = deriveOptions(data, { item: true, location: true, period: false })
+  const rows = data.filter(r => rowPasses(r, filters))
   const r0 = p => Math.round(p.value)
   const cols = [
     { field: 'item_code', headerName: 'SKU', maxWidth: 100 },
@@ -19,7 +24,8 @@ export default function Inventory() {
   return (
     <>
       <PageHeader title="Inventory Planning" subtitle="Safety stock, reorder point and order-up-to targets, derived from service levels and demand variability." />
-      <div className="p-8"><div className="card p-5"><Grid rows={data} columns={cols} /></div></div>
+      <FilterBar config={cfg} value={filters} onChange={setFilters} />
+      <div className="p-8"><div className="card p-5"><Grid rows={rows} columns={cols} /></div></div>
     </>
   )
 }
