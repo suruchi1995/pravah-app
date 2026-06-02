@@ -363,6 +363,57 @@ class Parameter(TenantMixin, Base):
 
 
 # ----------------------------------------------------------------------------
+# AUTH / TENANCY / WORKFLOW
+# ----------------------------------------------------------------------------
+class Tenant(Base):
+    __tablename__ = "tenants"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(128))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class User(Base):
+    __tablename__ = "users"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(String(64), index=True)
+    email: Mapped[str] = mapped_column(String(160), index=True)
+    username: Mapped[str | None] = mapped_column(String(64), nullable=True)  # reserved for later
+    password_hash: Mapped[str] = mapped_column(String(256))
+    full_name: Mapped[str] = mapped_column(String(128))
+    roles_csv: Mapped[str] = mapped_column(String(256), default="viewer")  # e.g. "planner,approver"
+    is_active: Mapped[bool] = mapped_column(default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    @property
+    def roles(self) -> list[str]:
+        return [r.strip() for r in self.roles_csv.split(",") if r.strip()]
+
+
+class ChangeRequest(TenantMixin, Base):
+    __tablename__ = "change_requests"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    requested_by: Mapped[str] = mapped_column(String(160))      # user email
+    change_type: Mapped[str] = mapped_column(String(32))        # demand_override | parameter
+    target: Mapped[str] = mapped_column(String(256))            # human-readable target
+    payload_json: Mapped[str] = mapped_column(String())         # the proposed change, as JSON
+    old_value: Mapped[str] = mapped_column(String(), default="")
+    new_value: Mapped[str] = mapped_column(String(), default="")
+    status: Mapped[str] = mapped_column(String(16), default="submitted")  # submitted|approved|rejected
+    reviewed_by: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    review_note: Mapped[str] = mapped_column(String(), default="")
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class AuditLog(TenantMixin, Base):
+    __tablename__ = "audit_log"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_email: Mapped[str] = mapped_column(String(160))
+    action: Mapped[str] = mapped_column(String(64))
+    detail: Mapped[str] = mapped_column(String(), default="")
+
+
+# ----------------------------------------------------------------------------
 # Engine / session factory
 # ----------------------------------------------------------------------------
 def make_engine(database_url: str):

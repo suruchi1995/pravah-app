@@ -33,14 +33,23 @@ from backend.seed_loader import load as seed_synthetic
 from planning.run_all import run_pipeline
 from optimization import production_optimizer
 from ai import copilot
+from backend import auth as authmod
 from pydantic import BaseModel
+from fastapi import Depends, Header
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATE_PATH = os.path.join(ROOT, "Pravah_Client_Template.xlsx")
 
 engine = m.make_engine(DATABASE_URL)
 m.init_db(engine)
+from backend.migrate import reconcile_schema
+reconcile_schema(engine)   # add any columns missing from pre-existing tables (prevents 500s on deploy)
 Session = m.make_session_factory(engine)
+
+# bootstrap admin + tenant so the app is never locked out (same tenant as the demo data)
+with Session() as _s:
+    authmod.seed_admin(_s, tenant_id=DEFAULT_TENANT,
+                       email="admin@pravah.app", password="changeme123", name="Admin")
 
 app = FastAPI(title="Pravah API", version="0.3")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -67,6 +76,80 @@ def _ensure_seeded(tenant):
 @app.get("/api/health")
 def health():
     return {"status": "ok", "db": DATABASE_URL.split("://")[0]}
+
+
+# ---------------- auth ----------------
+def current_user(authorization: str = Header(None)):
+    """Resolve the logged-in user from the Bearer token. Returns the JWT payload
+    dict (sub, tenant, roles, name) or raises 401."""
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(401, "Not authenticated")
+    token = authorization.split(" ", 1)[1]
+    payload = authmod.verify_token(token)
+    if not payload:
+        raise HTTPException(401, "Invalid or expired token")
+    return payload
+
+
+def require_roles(*allowed):
+    def dep(user=Depends(current_user)):
+        if not (set(user.get("roles", [])) & set(allowed)):
+            raise HTTPException(403, f"Requires one of roles: {allowed}")
+        return user
+    return dep
+
+
+class LoginBody(BaseModel):
+    email: str
+    password: str
+
+
+@app.post("/api/login")
+def login(body: LoginBody):
+    with Session() as s:
+        u = authmod.authenticate(s, body.email, body.password)
+        if not u:
+            raise HTTPException(401, "Invalid email or password")
+        s.add(m.AuditLog(tenant_id=u.tenant_id, user_email=u.email, action="login", detail=""))
+        s.commit()
+        return {"token": authmod.make_token(u),
+                "user": {"email": u.email, "name": u.full_name, "roles": u.roles, "tenant": u.tenant_id}}
+
+
+@app.get("/api/me")
+def me(user=Depends(current_user)):
+    return user
+
+
+class NewUserBody(BaseModel):
+    email: str
+    password: str
+    full_name: str
+    roles: list[str]
+    tenant: str = None
+
+
+@app.get("/api/users")
+def list_users(user=Depends(require_roles("admin"))):
+    with Session() as s:
+        rows = s.query(m.User).filter_by(tenant_id=user["tenant"]).all()
+        return [{"email": u.email, "full_name": u.full_name, "roles": u.roles,
+                 "is_active": u.is_active, "tenant": u.tenant_id} for u in rows]
+
+
+@app.post("/api/users")
+def create_user(body: NewUserBody, user=Depends(require_roles("admin"))):
+    tenant = body.tenant or user["tenant"]
+    with Session() as s:
+        if s.query(m.User).filter_by(email=body.email.lower().strip()).first():
+            raise HTTPException(400, "A user with that email already exists.")
+        s.add(m.User(tenant_id=tenant, email=body.email.lower().strip(),
+                     password_hash=authmod.hash_password(body.password),
+                     full_name=body.full_name, roles_csv=",".join(body.roles), is_active=True))
+        s.add(m.AuditLog(tenant_id=user["tenant"], user_email=user["sub"],
+                         action="create_user", detail=f"{body.email} roles={body.roles}"))
+        s.commit()
+        return {"ok": True, "email": body.email}
 
 
 @app.get("/api/template")
@@ -309,6 +392,126 @@ def capabilities(tenant: str = Query(DEFAULT_TENANT)):
 class CopilotQuery(BaseModel):
     question: str
     tenant: str = DEFAULT_TENANT
+
+
+# ---------------- parameters (view; edits go through approval) ----------------
+@app.get("/api/parameters")
+def get_parameters(user=Depends(current_user)):
+    from backend.parameters import list_parameters
+    with Session() as s:
+        return list_parameters(s, user["tenant"])
+
+
+# ---------------- change requests (approval workflow) ----------------
+import json as _json
+from datetime import datetime as _dt
+
+
+class ChangeBody(BaseModel):
+    change_type: str            # "parameter" | "demand_override"
+    target: str                 # human-readable
+    payload: dict               # the proposed change
+    old_value: str = ""
+    new_value: str = ""
+
+
+@app.post("/api/change-requests")
+def submit_change(body: ChangeBody, user=Depends(require_roles("planner", "admin"))):
+    with Session() as s:
+        cr = m.ChangeRequest(
+            tenant_id=user["tenant"], requested_by=user["sub"], change_type=body.change_type,
+            target=body.target, payload_json=_json.dumps(body.payload),
+            old_value=body.old_value, new_value=body.new_value, status="submitted")
+        s.add(cr)
+        s.add(m.AuditLog(tenant_id=user["tenant"], user_email=user["sub"],
+                         action="submit_change", detail=f"{body.change_type}: {body.target}"))
+        s.commit()
+        return {"ok": True, "id": cr.id, "status": "submitted"}
+
+
+@app.get("/api/change-requests")
+def list_changes(status: str = None, user=Depends(current_user)):
+    with Session() as s:
+        q = s.query(m.ChangeRequest).filter_by(tenant_id=user["tenant"])
+        if status:
+            q = q.filter_by(status=status)
+        rows = q.order_by(m.ChangeRequest.id.desc()).all()
+        return [{"id": c.id, "requested_by": c.requested_by, "change_type": c.change_type,
+                 "target": c.target, "old_value": c.old_value, "new_value": c.new_value,
+                 "status": c.status, "reviewed_by": c.reviewed_by, "review_note": c.review_note}
+                for c in rows]
+
+
+def _apply_change(s, cr, tenant):
+    """Apply an approved change to live data."""
+    payload = _json.loads(cr.payload_json)
+    if cr.change_type == "parameter":
+        from backend.parameters import set_param
+        set_param(s, payload["name"], payload["value"], tenant=tenant,
+                  scope=payload.get("scope", "global"), source="planner")
+    elif cr.change_type == "demand_override":
+        # upsert a demand override row
+        existing = s.query(m.DemandOverride).filter_by(
+            tenant_id=tenant, item_code=payload["item_code"],
+            location_code=payload["location_code"], period=payload["period"]).first()
+        if existing:
+            existing.override_qty = payload["override_qty"]
+            existing.override_type = payload.get("override_type", "absolute")
+            existing.reason = payload.get("reason", "")
+            existing.source = "planner"
+        else:
+            s.add(m.DemandOverride(
+                tenant_id=tenant, item_code=payload["item_code"],
+                location_code=payload["location_code"], period=payload["period"],
+                override_qty=payload["override_qty"],
+                override_type=payload.get("override_type", "absolute"),
+                reason=payload.get("reason", ""), source="planner"))
+    s.commit()
+
+
+class ReviewBody(BaseModel):
+    note: str = ""
+
+
+@app.post("/api/change-requests/{cr_id}/approve")
+def approve_change(cr_id: int, body: ReviewBody, user=Depends(require_roles("approver", "management", "admin"))):
+    with Session() as s:
+        cr = s.query(m.ChangeRequest).filter_by(id=cr_id, tenant_id=user["tenant"]).first()
+        if not cr:
+            raise HTTPException(404, "Change request not found")
+        if cr.status != "submitted":
+            raise HTTPException(400, f"Already {cr.status}")
+        _apply_change(s, cr, user["tenant"])
+        cr.status = "approved"; cr.reviewed_by = user["sub"]; cr.review_note = body.note
+        cr.reviewed_at = _dt.utcnow()
+        s.add(m.AuditLog(tenant_id=user["tenant"], user_email=user["sub"],
+                         action="approve_change", detail=f"CR#{cr_id}: {cr.target}"))
+        s.commit()
+        # re-run pipeline so approved change flows into the plan
+        run_pipeline(s, user["tenant"])
+        return {"ok": True, "status": "approved", "replanned": True}
+
+
+@app.post("/api/change-requests/{cr_id}/reject")
+def reject_change(cr_id: int, body: ReviewBody, user=Depends(require_roles("approver", "management", "admin"))):
+    with Session() as s:
+        cr = s.query(m.ChangeRequest).filter_by(id=cr_id, tenant_id=user["tenant"]).first()
+        if not cr:
+            raise HTTPException(404, "Change request not found")
+        cr.status = "rejected"; cr.reviewed_by = user["sub"]; cr.review_note = body.note
+        cr.reviewed_at = _dt.utcnow()
+        s.add(m.AuditLog(tenant_id=user["tenant"], user_email=user["sub"],
+                         action="reject_change", detail=f"CR#{cr_id}: {cr.target}"))
+        s.commit()
+        return {"ok": True, "status": "rejected"}
+
+
+@app.get("/api/audit-log")
+def audit_log(user=Depends(require_roles("admin", "management", "approver"))):
+    with Session() as s:
+        rows = s.query(m.AuditLog).filter_by(tenant_id=user["tenant"]).order_by(m.AuditLog.id.desc()).limit(200).all()
+        return [{"user": r.user_email, "action": r.action, "detail": r.detail,
+                 "at": r.created_at.isoformat() if r.created_at else None} for r in rows]
 
 
 @app.post("/api/copilot")
