@@ -1,0 +1,7 @@
+tenant_id,item_code,location_code,period,override_qty,override_type,reason,source
+apex,FG006,DC_DEL,2026-04-01,25,uplift_pct,Pre-workout launch campaign,upload
+apex,FG006,DC_MUM,2026-04-01,25,uplift_pct,Pre-workout launch campaign,upload
+apex,FG006,DC_BLR,2026-04-01,25,uplift_pct,Pre-workout launch campaign,upload
+apex,FG006,DC_DEL,2026-05-01,15,uplift_pct,Pre-workout launch campaign,upload
+apex,FG006,DC_MUM,2026-05-01,15,uplift_pct,Pre-workout launch campaign,upload
+apex,FG006,DC_BLR,2026-05-01,15,uplift_pct,Pre-workout launch campaign,upload

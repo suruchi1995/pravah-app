@@ -89,12 +89,18 @@ def load(session):
         # wipe existing source rows for this tenant (idempotent reseed)
         session.query(model).filter(model.tenant_id == DEFAULT_TENANT).delete()
         path = os.path.join(DATA, fname)
+        if not os.path.exists(path):
+            # optional CSVs (e.g. demand_overrides) may be absent — that's fine,
+            # never crash the seed because a non-required file is missing.
+            counts[fname] = 0
+            continue
         rows = []
         with open(path) as fh:
             for r in csv.DictReader(fh):
                 kwargs = {"tenant_id": r.get("tenant_id", DEFAULT_TENANT)}
                 for col, (attr, caster) in mapping.items():
-                    kwargs[attr] = caster(r[col])
+                    raw = r.get(col, "")
+                    kwargs[attr] = caster(raw)
                 rows.append(model(**kwargs))
         session.bulk_save_objects(rows)
         counts[fname] = len(rows)
