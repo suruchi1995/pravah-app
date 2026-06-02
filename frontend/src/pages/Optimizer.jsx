@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { api } from '../api'
 import { useAsync, PageHeader, Loading, ErrorBox } from '../components/ui'
+import { FilterBar } from '../components/FilterBar'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts'
 
 const LABELS = { min_cost: 'Minimise Cost', max_service: 'Maximise Service', balanced: 'Balanced' }
@@ -8,6 +9,7 @@ const LABELS = { min_cost: 'Minimise Cost', max_service: 'Maximise Service', bal
 export default function Optimizer() {
   const { loading, data, error } = useAsync(() => api.optimizer())
   const [sel, setSel] = useState('min_cost')
+  const [filters, setFilters] = useState({ items: [], locations: [], periods: [] })
   if (loading) return <><PageHeader title="Optimization Workbench" /><Loading /></>
   if (error) return <ErrorBox msg={error} />
 
@@ -25,8 +27,9 @@ export default function Optimizer() {
       </>
     )
   }
-  // build comparison: total production per scenario per SKU
-  const skus = [...new Set(Object.values(data).flatMap(s => (s.plan || []).map(p => p.item_code)))].sort()
+  const allSkus = [...new Set(Object.values(data).flatMap(s => (s.plan || []).map(p => p.item_code)))].sort()
+  const activeItems = filters.items || []
+  const skus = activeItems.length ? allSkus.filter(s => activeItems.includes(s)) : allSkus
   const compare = skus.map(sku => {
     const row = { sku }
     scenarios.forEach(sc => { row[sc] = Math.round((data[sc].plan || []).filter(p => p.item_code === sku).reduce((a, p) => a + p.quantity, 0)) })
@@ -47,6 +50,7 @@ export default function Optimizer() {
           ))}
         </div>
       </PageHeader>
+      <FilterBar config={{ items: allSkus }} value={filters} onChange={setFilters} />
       <div className="p-8 space-y-6">
         <div className="card p-6 border-l-4" style={{ borderColor: colors[sel] }}>
           <div className="text-xs uppercase tracking-wide text-slate2">{LABELS[sel]} · {cur.status}</div>
