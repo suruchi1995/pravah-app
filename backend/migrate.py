@@ -34,38 +34,50 @@ def _sql_type(col):
 
 
 def reconcile_schema(engine):
-    """Add any model columns missing from existing tables. Safe to run on every boot."""
+    """Make the live DB compatible with the current models. Safe to run on every boot.
+    Two operations, both non-destructive:
+      1. ADD columns that exist in the model but not in the live table.
+      2. WIDEN string columns to unbounded VARCHAR (Postgres only) so values never
+         truncate. Widening never loses data. This fixes pre-existing tables that
+         were created with a narrow varchar(N) before the model was relaxed.
+    """
     insp = inspect(engine)
     existing_tables = set(insp.get_table_names())
-    added = []
+    is_postgres = engine.dialect.name == "postgresql"
+    changed = []
 
     for table_name, table in m.Base.metadata.tables.items():
         if table_name not in existing_tables:
-            # create_all handles brand-new tables; skip here
-            continue
-        live_cols = {c["name"] for c in insp.get_columns(table_name)}
+            continue  # create_all handles brand-new tables
+        live_cols = {c["name"]: c for c in insp.get_columns(table_name)}
+
         for col in table.columns:
+            # 1. add missing column
             if col.name not in live_cols:
                 coltype = _sql_type(col)
-                default = ""
-                # give a safe default for NOT NULL-ish additions
-                if coltype == "VARCHAR":
-                    default = " DEFAULT ''"
-                elif coltype in ("INTEGER", "DOUBLE PRECISION"):
-                    default = " DEFAULT 0"
-                elif coltype == "BOOLEAN":
-                    default = " DEFAULT TRUE"
-                ddl = f'ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS {col.name} {coltype}{default}'
-                try:
-                    with engine.begin() as conn:
-                        conn.execute(text(ddl))
-                    added.append(f"{table_name}.{col.name}")
-                except Exception as e:
-                    # SQLite doesn't support ADD COLUMN IF NOT EXISTS; try without it
+                default = " DEFAULT ''" if coltype == "VARCHAR" else (
+                    " DEFAULT 0" if coltype in ("INTEGER", "DOUBLE PRECISION") else (
+                    " DEFAULT TRUE" if coltype == "BOOLEAN" else ""))
+                for ddl in (f'ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS {col.name} {coltype}{default}',
+                            f'ALTER TABLE {table_name} ADD COLUMN {col.name} {coltype}{default}'):
                     try:
                         with engine.begin() as conn:
-                            conn.execute(text(f'ALTER TABLE {table_name} ADD COLUMN {col.name} {coltype}{default}'))
-                        added.append(f"{table_name}.{col.name}")
+                            conn.execute(text(ddl))
+                        changed.append(f"add {table_name}.{col.name}")
+                        break
                     except Exception:
-                        pass  # column likely already exists or dialect limitation
-    return added
+                        continue
+                continue
+
+            # 2. widen narrow string columns (Postgres enforces varchar length)
+            if is_postgres:
+                tname = col.type.__class__.__name__.lower()
+                if "string" in tname or "varchar" in tname or "text" in tname:
+                    try:
+                        with engine.begin() as conn:
+                            conn.execute(text(
+                                f'ALTER TABLE {table_name} ALTER COLUMN {col.name} TYPE VARCHAR'))
+                        changed.append(f"widen {table_name}.{col.name}")
+                    except Exception:
+                        pass
+    return changed
