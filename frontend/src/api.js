@@ -1,9 +1,46 @@
 const BASE = '/api'
 
+// Parse a response body safely. An empty/truncated body (cold start, 502, timeout)
+// must NOT crash the app with "Unexpected end of JSON input".
+async function parseJson(r) {
+  const text = await r.text()
+  if (!text) {
+    throw new Error(`Empty response (${r.status}). The server may be waking up.`)
+  }
+  try {
+    return JSON.parse(text)
+  } catch {
+    throw new Error(`Server returned a non-JSON response (${r.status}). It may be waking up — please retry.`)
+  }
+}
+
+// fetch with a timeout + one automatic retry, to ride out Render free-tier cold starts.
+async function fetchResilient(url, opts = {}, { retries = 2, timeoutMs = 60000 } = {}) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+      const r = await fetch(url, { ...opts, signal: ctrl.signal })
+      clearTimeout(timer)
+      if (r.status >= 500 && attempt < retries) {
+        await new Promise(res => setTimeout(res, 3000))  // backend waking; wait & retry
+        continue
+      }
+      return r
+    } catch (e) {
+      if (attempt < retries) {
+        await new Promise(res => setTimeout(res, 3000))
+        continue
+      }
+      throw new Error('Could not reach the server. It may be waking up — please retry in a moment.')
+    }
+  }
+}
+
 async function get(path) {
-  const r = await fetch(`${BASE}${path}`)
+  const r = await fetchResilient(`${BASE}${path}`)
   if (!r.ok) throw new Error(`${r.status} ${r.statusText}`)
-  return r.json()
+  return parseJson(r)
 }
 
 export const api = {
@@ -19,20 +56,21 @@ export const api = {
   optimizer: (t = 'apex') => get(`/optimizer?tenant=${t}`),
   master: (table, t = 'apex') => get(`/master/${table}?tenant=${t}`),
   copilot: async (question, tenant = 'apex') => {
-    const r = await fetch(`${BASE}/copilot`, {
+    const r = await fetchResilient(`${BASE}/copilot`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ question, tenant }),
     })
     if (!r.ok) throw new Error(`${r.status}`)
-    return r.json()
+    return parseJson(r)
   },
-  resetDemo: (t = 'apex') => fetch(`${BASE}/reset-demo?tenant=${t}`, { method: 'POST' }).then(r => r.json()),
-  resetStatus: (t = 'apex') => fetch(`${BASE}/reset-status?tenant=${t}`).then(r => r.json()),
+  resetDemo: (t = 'apex') => fetchResilient(`${BASE}/reset-demo?tenant=${t}`, { method: 'POST' }).then(parseJson),
+  resetStatus: (t = 'apex') => fetchResilient(`${BASE}/reset-status?tenant=${t}`).then(parseJson),
   templateUrl: `${BASE}/template`,
   upload: async (fileObj, tenant) => {
     const fd = new FormData()
     fd.append('file', fileObj)
-    const r = await fetch(`${BASE}/upload?tenant=${tenant}`, { method: 'POST', body: fd })
-    return r.json()
+    const r = await fetchResilient(`${BASE}/upload?tenant=${tenant}`, { method: 'POST', body: fd },
+      { retries: 0, timeoutMs: 120000 })  // upload: no auto-retry (don't double-upload), long timeout
+    return parseJson(r)
   },
 }
