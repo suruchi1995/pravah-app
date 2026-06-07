@@ -1,166 +1,176 @@
 # Pravah — Testing Issue Tracker
 
-**Owner:** Suruchi | **Started:** 2026-06 testing week
-**How we work:** Suruchi tests → logs an issue → we discuss → analyse → solve → push → Suruchi re-tests on live → mark Certified.
+**Owner:** Suruchi | **Updated:** 2026-06-07 (Round 2 testing)
+**How we work:** Suruchi tests → logs issue → we discuss → analyse → solve → push → Suruchi re-tests → mark Certified.
 
 ## Status lifecycle
-`IDENTIFIED` → `DISCUSSING` → `ANALYSED` → `IN PROGRESS` → `FIXED (awaiting test)` → `CERTIFIED ✅` (or `WON'T FIX` / `DEFERRED`)
+`IDENTIFIED` → `DISCUSSING` → `ANALYSED` → `IN PROGRESS` → `FIXED (awaiting test)` → `CERTIFIED ✅` | `DEFERRED` | `WON'T FIX`
 
 ## Severity
 🔴 Blocker · 🟠 Major · 🟡 Minor · 🔵 Enhancement
 
 ---
 
-## Summary table
+## ROUND 1 ISSUES — STATUS
 
-| ID | Area | Issue (short) | Severity | Status |
-|----|------|---------------|----------|--------|
-| 1 | Auth | Login page + approvals don't exist on live | 🟠 Major | IDENTIFIED |
-| 2 | Filters | Add hierarchy in filter (e.g. whole North zone together) | 🔵 Enh | IDENTIFIED |
-| 3 | Dashboard | More informative — more/better KPIs (Finished Goods isn't a KPI) | 🟠 Major | IDENTIFIED |
-| 4 | Dashboard | KPI cards should be clickable → deep-dive to source screen | 🔵 Enh | IDENTIFIED |
-| 5 | Dashboard | Bottleneck card → click shows real issue + suggested fix | 🔵 Enh | IDENTIFIED |
-| 6 | Dashboard | Add filters: Item, Location, Time | 🟠 Major | IDENTIFIED |
-| 7 | Data Hub | Add global filter; local filters need dropdowns too (everywhere) | 🟡 Minor | IDENTIFIED |
-| 8 | Data Hub | UOM inconsistent in UI; are we using UOM in demand/production calc? Standardise (ask kg) or add UOM conversion DB | 🟠 Major | IDENTIFIED |
-| 9 | Data Hub | Better headings; "unit price or cost" → "price per unit" | 🟡 Minor | IDENTIFIED |
-| 10 | Data / Model | Where do we capture: MOQ, lane lead-time (origin→dest), resources producing FG, where-produced, transmode, expiry? Add lanes concept. Expiry in item dim. | 🟠 Major | IDENTIFIED |
-| 11 | Network | Are suppliers/packaging used by any item? If not, fix data | 🟠 Major | IDENTIFIED |
-| 12 | Network | Add location filter | 🟡 Minor | IDENTIFIED |
-| 13 | Network | "Something is missing" (to be specified) | 🟡 Minor | IDENTIFIED |
-| 14 | Segmentation | Less reasoning text; more charts | 🔵 Enh | IDENTIFIED |
-| 15 | Segmentation | Do CI / predictability / supply-capability segmentation at item-location level | 🟠 Major | IDENTIFIED |
-| 16 | Segmentation | Add location; segment at item-location level | 🟠 Major | IDENTIFIED |
-| 17 | Segmentation | Add top/least item & location to focus on | 🔵 Enh | IDENTIFIED |
-
----
-
-## Issue detail log
-
-### Issue #1 — Auth login page + approvals don't exist on live
-- **Area:** Auth
-- **Reported:** Login/approval UI not visible on the live app.
-- **Status:** IDENTIFIED
-- **Notes:** Backend auth (login, roles, approval workflow, audit) is BUILT & tested (11/11) but the read endpoints are deliberately left open and there is NO frontend login screen yet. This is expected — we held it for the testing week. Decision needed: build the login UI + approval inbox now, or after testing week.
-- **Resolution:** _pending_
-
-### Issue #2 — Filter hierarchy (zones)
-- **Area:** Filters
-- **Reported:** Want to view whole North zone data together (hierarchy in filters).
-- **Status:** IDENTIFIED
-- **Notes:** Locations have a `zone` field already. Need: zone → DC hierarchy in the FilterBar (select a zone = all its DCs).
-- **Resolution:** _pending_
-
-### Issue #3 — Dashboard more informative / better KPIs
-- **Area:** Dashboard
-- **Reported:** Finished Goods count isn't a real KPI; want more meaningful metrics.
-- **Status:** IDENTIFIED
-- **Notes:** Candidate KPIs: total revenue at risk, avg fill rate, forecast MAPE, # SKUs at risk, # bottlenecks, on-time/cover days, inventory value. Need to agree the headline set.
-- **Resolution:** _pending_
-
-### Issue #4 — Clickable KPI cards (deep dive)
-- **Area:** Dashboard
-- **Reported:** Clicking a KPI (e.g. Avg Fill Rate) should navigate to the screen showing that calculation.
-- **Status:** IDENTIFIED
-- **Resolution:** _pending_
-
-### Issue #5 — Bottleneck card → real issue + suggestion
-- **Area:** Dashboard
-- **Reported:** Clicking the Bottleneck KPI should show the actual constrained resource and a recommended action.
-- **Status:** IDENTIFIED
-- **Resolution:** _pending_
-
-### Issue #6 — Dashboard filters (Item/Location/Time)
-- **Area:** Dashboard
-- **Reported:** Dashboard has no filters.
-- **Status:** IDENTIFIED
-- **Resolution:** _pending_
-
-### Issue #7 — Data Hub filters + dropdowns everywhere
-- **Area:** Data Hub / global
-- **Reported:** Data Hub needs the global filter; local filters should also have dropdowns (easier). Apply consistently across all screens.
-- **Status:** IDENTIFIED
-- **Resolution:** _pending_
-
-### Issue #8 — UOM consistency + usage in calculations
-- **Area:** Data Hub / engine
-- **Reported:** Different UOMs shown; should be consistent. Are we using UOM in demand/production calc? Proposal: ask clients to fill in kg; if they can't, need a UOM conversion table.
-- **Status:** IDENTIFIED
-- **Notes:** IMPORTANT correctness question — need to check whether engines assume a single UOM. If mixed UOM exists without conversion, calculations could be wrong.
-- **Resolution:** _pending_
-
-### Issue #9 — Headings / labels
-- **Area:** Data Hub
-- **Reported:** Improve headings; "unit price or cost" → "price per unit".
-- **Status:** IDENTIFIED
-- **Resolution:** _pending_
-
-### Issue #10 — Missing data concepts (MOQ, lanes, transmode, expiry, where-produced)
-- **Area:** Data model / contract
-- **Reported:** Where are we capturing MOQ, lane lead-time (origin→destination), resources that produce each FG, where each item is produced, transport mode, expiry date? Proposal: add a "lanes" concept (item shipped/produced/procured from X to Y via transmode, with min lot size + lead time). Expiry can live in item dimension. Ask these in the 7/9 templates.
-- **Status:** IDENTIFIED
-- **Notes:** Significant data-model extension. Need to map what exists vs what's missing, then decide template changes.
-- **Resolution:** _pending_
-
-### Issue #11 — Suppliers/packaging not used by any item?
-- **Area:** Network / data
-- **Reported:** It looks like no item uses suppliers or packaging materials. If true, fix the demo data so the BOM/sourcing actually connects.
-- **Status:** IDENTIFIED
-- **Notes:** Need to inspect BOM + supplier_item_mapping to confirm whether RM/PM and suppliers are actually linked to FGs.
-- **Resolution:** _pending_
-
-### Issue #12 — Network location filter
-- **Area:** Network
-- **Reported:** Add a location filter to the Network page.
-- **Status:** IDENTIFIED
-- **Resolution:** _pending_
-
-### Issue #13 — Network "something is missing"
-- **Area:** Network
-- **Reported:** Suruchi senses something missing — to be specified.
-- **Status:** IDENTIFIED
-- **Resolution:** _pending_
-
-### Issue #14 — Segmentation: fewer words, more charts
-- **Area:** Segmentation
-- **Reported:** Reasoning text is too detailed; want more charts instead.
-- **Status:** IDENTIFIED
-- **Resolution:** _pending_
-
-### Issue #15 — Segmentation: CI / predictability / supply-capability
-- **Area:** Segmentation
-- **Reported:** Move beyond ABC/XYZ to product segmentation that includes criticality/CI, predictability, and supply capability — more useful for planners & CEO at item-location level.
-- **Status:** IDENTIFIED
-- **Resolution:** _pending_
-
-### Issue #16 — Segmentation at item-location level
-- **Area:** Segmentation
-- **Reported:** Add location; segment at the lowest (item-location) level to see which item impacts which location most.
-- **Status:** IDENTIFIED
-- **Resolution:** _pending_
-
-### Issue #17 — Segmentation: top/least focus items
-- **Area:** Segmentation
-- **Reported:** Show top item, least item, top/least location to focus on.
-- **Status:** IDENTIFIED
-- **Resolution:** _pending_
-
+| ID | Area | Issue | Sev | Status |
+|----|------|-------|-----|--------|
+| R1-1 | Auth | Login page + approvals UI | 🟠 | FIXED — awaiting retest (blank page bug reported in R2) |
+| R1-2 | Filters | Zone hierarchy | 🔵 | FIXED — awaiting retest |
+| R1-3 | Dashboard | Better KPIs | 🟠 | FIXED — awaiting retest |
+| R1-4 | Dashboard | Clickable KPI cards | 🔵 | FIXED — awaiting retest |
+| R1-5 | Dashboard | Bottleneck popup | 🔵 | FIXED — awaiting retest |
+| R1-6 | Dashboard | Filters | 🟠 | FIXED — awaiting retest |
+| R1-7 | Data Hub | PM/RM/SFG tabs | 🟡 | FIXED — new issues found in R2 |
+| R1-8 | UOM | UOM conversion table | 🟠 | IN PROGRESS (building now) |
+| R1-9 | Data Hub | Better labels | 🟡 | FIXED — awaiting retest |
+| R1-10 | Data/Model | Supply Lanes | 🟠 | FIXED — lanes empty issue in R2 |
+| R1-11 | Network | PM/suppliers visible | 🟠 | FIXED — network not rendering in R2 |
+| R1-12 | Network | Location filter | 🟡 | FIXED — awaiting retest |
+| R1-13 | Network | Something missing | 🟡 | DEFERRED |
+| R1-14 | Segmentation | Charts first | 🔵 | FIXED — click interaction reported in R2 |
+| R1-15 | Segmentation | CI/predictability model | 🟠 | IN PROGRESS (building now) |
+| R1-16 | Segmentation | Item-location level | 🟠 | IN PROGRESS (building now) |
+| R1-17 | Segmentation | Top/least focus items | 🔵 | FIXED — awaiting retest |
 
 ---
 
-## Status update — 2026-06 batch
+## ROUND 2 ISSUES — NEW (from 2026-06-07 testing)
 
-- **Issue #1:** IN PROGRESS — Login screen + Approvals inbox built. Auth endpoints deployed (additive). Frontend login page at /login. Approvals page in nav. **Awaiting test on live site.**
-- **Issue #2:** FIXED — Zone added as filter hierarchy in FilterBar. All pages with location filter now show Zone → Location hierarchy.
-- **Issue #3:** FIXED — Dashboard KPIs replaced: Revenue at Risk, Avg Fill Rate, SKUs at Risk, Forecast MAPE, Capacity Bottlenecks. Finished Goods removed.
-- **Issue #4:** FIXED — All KPI cards are clickable and navigate to the relevant screen.
-- **Issue #5:** FIXED — Bottleneck card shows popup with resource name, utilisation, and specific suggested fix. Also navigates to Capacity page.
-- **Issue #6:** FIXED — Dashboard has Item/Location/Period/Zone filters. KPIs and chart filter accordingly.
-- **Issue #7:** FIXED — DataHub tabs expanded (FG/RM/PM/SFG/All/Lanes/Supplier-Item). Column labels humanised everywhere.
-- **Issue #8:** DISCUSSED — UOM labels now shown on all quantity columns. BOM quantities are already in component UOM (correct by convention). UOM conversion table deferred to next session.
-- **Issue #9:** FIXED — "unit_price_or_cost" → "Price per Unit (₹)", all column headers humanised.
-- **Issue #10:** FIXED — supply_lanes table added (item-specific origin→destination, transmode, lead time, min lot). 42 demo lanes seeded (supplier→plant + plant→DC per FG). Shown in Data Hub + Network.
-- **Issue #11:** FIXED — PM items visible in Data Hub (PM tab). Supplier-Item mapping tab added. Supply lanes show explicit supplier→RM/PM→plant→DC flows.
-- **Issue #12:** FIXED — Network page has Zone + Location + Item filters.
-- **Issue #14:** FIXED — Segmentation rewritten: ABC bar chart + XYZ pie chart + matrix. CoV column removed. Less text, charts lead.
-- **Issue #17:** FIXED — Top 5 items by value, bottom 3, erratic (Z) items shown as focus lists.
+| ID | Area | Issue | Sev | Status |
+|----|------|-------|-----|--------|
+| R2-1 | Auth | Login page shows blank; approvals blank page | 🔴 | IDENTIFIED |
+| R2-1a | Auth | Admin workspace — where to register users, assign roles, generate passwords | 🟠 | IDENTIFIED |
+| R2-2 | Auth/Roles | Certain fields (MOQ, expiry, lead time, params) editable by one role only | 🟠 | IDENTIFIED |
+| R2-2a | Data | After user edits field — "Update data" button to push to Neon + re-run plan | 🟠 | IDENTIFIED |
+| R2-3 | Demand Plan | Where is demand override UI? | 🟠 | IDENTIFIED |
+| R2-4 | UI/Global | Column headers not fully visible; can't resize columns easily | 🟡 | IDENTIFIED |
+| R2-5 | Filters | Supplier data not in filter | 🟡 | IDENTIFIED |
+| R2-6 | Data Hub | Add Item/Location filter to global filter | 🟠 | IDENTIFIED |
+| R2-7 | Data Hub | Local filter still no dropdown list | 🟡 | IDENTIFIED |
+| R2-8 | Data Hub | Combine all items into one tab with item_type column | 🟡 | IDENTIFIED |
+| R2-9 | Data Hub | Supply Lane + Supplier-Item → one tab; lanes empty; needs: item/from/to/transmode | 🟠 | IDENTIFIED |
+| R2-10 | Data Hub | Expiry dates missing; transmode missing | 🟠 | IDENTIFIED |
+| R2-11 | Network | Network not rendering (blank/broken) | 🔴 | IDENTIFIED |
+| R2-12 | Network | Bottom DC cards → navigate to filtered page | 🔵 | IDENTIFIED |
+| R2-13 | Network | Remove DC type tags (too cluttered) | 🟡 | IDENTIFIED |
+| R2-14 | Segmentation | Click A in chart → all widgets filter to A items | 🔵 | IDENTIFIED |
+| R2-15 | Demand-Supply | Where is supply coming from in UI? Explain handshake logic. Demand override should be here | 🟠 | IDENTIFIED |
+| R2-16 | Inventory | Where is safety stock maintained? Is it from customer? Editable in Data Hub? | 🟠 | IDENTIFIED |
+| R2-17 | Inventory | Show all formula variables (safety stock, reorder, target, days) | 🟠 | IDENTIFIED |
+| R2-18 | Inventory | Shouldn't Netting come before Inventory in the flow? | 🟡 | IDENTIFIED |
+| R2-19 | Netting | Filter: All option + zonal + location + time hierarchy | 🟡 | IDENTIFIED |
+| R2-20 | Netting | Where do receipts come from? Explain PO/production/sales orders | 🟠 | IDENTIFIED |
+| R2-21 | Netting | Explain what planned orders means / where it comes from | 🟠 | IDENTIFIED |
+| R2-22 | Supply (MRP) | Add location filter | 🟡 | IDENTIFIED |
+| R2-23 | Supply (MRP) | Add chart/diagram linking to table | 🔵 | IDENTIFIED |
+| R2-24 | Capacity | Time on X axis; location + time filters (all hierarchy) | 🟠 | IDENTIFIED |
+| R2-25 | Capacity | Explain 3 scenarios — variables/parameters used | 🟠 | IDENTIFIED |
+| R2-26 | Capacity | User chooses scenario → all pages reflect results | 🟠 | IDENTIFIED |
+| R2-27 | Optimizer | Resource data — where does it come from? Add to Data Hub + make editable | 🟠 | IDENTIFIED |
+| R2-28 | Optimizer | Add resource filter | 🟡 | IDENTIFIED |
+| R2-29 | Optimizer | Click resource → navigate to items using it + fill rate | 🔵 | IDENTIFIED |
+| R2-30 | Optimizer | Warning: resource overused or underused | 🟠 | IDENTIFIED |
+| R2-31 | AI Copilot | (Testing feedback pending) | 🟡 | IDENTIFIED |
+| R2-32 | Approvals | Blank page; workspace only visible to approval role | 🔴 | IDENTIFIED |
+| R2-33 | Admin | Admin workspace: register users, assign roles, auto-generate password | 🟠 | IDENTIFIED |
+| R2-34 | User Page | User settings: view changes, approvals, change password, see roles | 🔵 | IDENTIFIED |
+| R2-35 | UI/Global | Left sidebar should be collapsible (on desktop too, not just mobile) | 🟡 | IDENTIFIED |
+| R2-36 | UI/Global | Company name visible somewhere in the UI | 🟡 | IDENTIFIED |
+| R2-37 | UI/Global | UI should represent a company using Pravah (branding) | 🔵 | IDENTIFIED |
+
+---
+
+## PRIORITY TRIAGE — What to work on next
+
+### 🔴 BLOCKERS (fix immediately)
+- **R2-1 / R2-32** — Login blank, Approvals blank. Nothing else matters if auth is broken.
+- **R2-11** — Network not rendering.
+
+### 🟠 MAJORS — discussion needed before building
+- **R2-1a / R2-33** — Admin workspace design
+- **R2-2 / R2-2a** — Role-based field editing + "push changes" button
+- **R2-3** — Demand override UI location
+- **R2-9 / R2-10** — Supply lane data completeness (expiry, transmode)
+- **R2-15** — Handshake explanation + override placement
+- **R2-16/17** — Inventory: safety stock source + formula transparency
+- **R2-25/26** — Scenario selection affecting all pages
+- **R2-27** — Optimizer resource data source
+
+### 🟡 MINORS — build without discussion
+- R2-4 (column resize), R2-5 (supplier filter), R2-6/7 (filter improvements),
+  R2-8 (items tab), R2-13 (network clutter), R2-19 (netting filter),
+  R2-22 (MRP location filter), R2-24 (capacity time axis + filter),
+  R2-28 (optimizer resource filter), R2-35 (sidebar collapsible desktop),
+  R2-36 (company name)
+
+### 🔵 ENHANCEMENTS — after majors
+- R2-12, R2-14, R2-23, R2-29, R2-30, R2-34, R2-37
+
+---
+
+## Issue detail — Round 2 (key ones)
+
+### R2-1 / R2-32 — Auth blank pages
+- Both login and approvals render blank. Root cause: likely a JS crash on load.
+  Approvals calls `/api/change-requests` with a Bearer token from localStorage —
+  if localStorage is empty (no login happened), the fetch returns 401 and the
+  component crashes instead of redirecting to /login.
+- **Fix:** Add auth guard (redirect to /login if no token), fix Approvals to handle 401.
+
+### R2-1a / R2-33 — Admin workspace
+- **Suruchi's ask:** A screen where admin can register new users, assign roles,
+  auto-generate a temporary password, and the user changes it on first login.
+- **Design needed:** Admin page at /admin with: user list, "Add user" form
+  (name, email, role selection, auto-generate password), deactivate user, reset password.
+
+### R2-2 / R2-2a — Role-based field editing + push button
+- Certain fields (MOQ, expiry, lead time, parameters) should only be editable
+  by specific roles (e.g. planner+).
+- After editing, an "Update & Re-plan" button pushes the change to Neon
+  and triggers the pipeline (not a full data upload — a targeted field update).
+
+### R2-3 — Demand override UI
+- Currently overrides are loaded via CSV. Suruchi wants to set them IN the UI
+  on the Demand-Supply screen (type a new demand qty → submits a change request
+  → goes through approval → pipeline re-runs).
+
+### R2-9 / R2-10 — Supply lanes data
+- Lanes tab is empty or incomplete. Supply lanes need: item_code, from_location,
+  to_location, transport_mode. Expiry days and transmode need to be in items/lanes.
+
+### R2-11 — Network not rendering
+- The Network page SVG fails to render. Likely a data-shape issue — nodes or
+  edges have null/undefined coordinates or the SVG viewBox is wrong.
+
+### R2-15 — Handshake explanation
+- What is supply coming from? Answer: on-hand inventory + planned receipts.
+- What is the handshake? It compares consensus demand (forecast ± override)
+  vs available supply = on-hand + open POs being received + production orders.
+  Gap = demand - supply. Fill rate = supply/demand. Revenue at risk = gap × price.
+- Demand override should be possible from this screen (links to R2-3).
+
+### R2-16/17 — Inventory formulas
+- Safety stock: calculated from demand variability + service level target.
+  Is NOT provided by customer — it's derived. Should be visible in Data Hub
+  as a derived/planner-adjustable parameter.
+- Formula: safety_stock = z × σ × √(lead_time); reorder = avg_demand × lead_time + SS;
+  target = reorder + avg_demand; days = target / (avg_demand/30).
+
+### R2-18 — Netting vs Inventory order
+- Suruchi asks if Netting should come before Inventory.
+- **Answer:** In standard MRP, the order is: Forecast → Demand Plan → Inventory
+  (sets safety stock targets) → Netting (gross - on_hand - SS - receipts = net)
+  → MRP explosion. So Inventory BEFORE Netting is correct. But the sidebar order
+  can be clarified with better labels to show the flow.
+
+### R2-25/26 — Scenario selection
+- User should pick which optimizer scenario they want, and ALL pages (MRP, capacity,
+  handshake) should reflect that scenario's plan — not just the Optimizer page.
+- This is a significant feature: requires a "selected_scenario" parameter that the
+  engines read when generating downstream outputs.
+
+### R2-27 — Optimizer resource data
+- Resource data (lines, hours) should come from users via Data Hub.
+  Currently it's in the dataset but not editable in the UI.
+  Make it editable in Data Hub (like parameters).
