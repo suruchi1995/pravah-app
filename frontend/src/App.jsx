@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Database, Layers, TrendingUp, Handshake, Boxes,
-  GitBranch, Network, Gauge, Sparkles, Building2, Upload, Bot, Share2, Menu, X,
+  GitBranch, Network, Gauge, Sparkles, Building2, Upload, Bot, Share2, Menu, X, ClipboardCheck,
 } from 'lucide-react'
 import Dashboard from './pages/Dashboard.jsx'
 import DataHub from './pages/DataHub.jsx'
@@ -15,6 +15,8 @@ import MRP from './pages/MRP.jsx'
 import Capacity from './pages/Capacity.jsx'
 import Optimizer from './pages/Optimizer.jsx'
 import Copilot from './pages/Copilot.jsx'
+import Login from './pages/Login.jsx'
+import Approvals from './pages/Approvals.jsx'
 import NetworkPage from './pages/Network.jsx'
 
 const NAV = [
@@ -30,6 +32,7 @@ const NAV = [
   { to: '/capacity', label: 'Capacity', icon: Gauge },
   { to: '/optimizer', label: 'Optimizer', icon: Sparkles },
   { to: '/copilot', label: 'AI Copilot', icon: Bot },
+  { to: '/approvals', label: 'Approvals', icon: ClipboardCheck },
 ]
 
 export default function App() {
@@ -112,6 +115,8 @@ export default function App() {
           <Route path="/capacity" element={<Capacity />} />
           <Route path="/optimizer" element={<Optimizer />} />
           <Route path="/copilot" element={<Copilot />} />
+          <Route path="/approvals" element={<Approvals />} />
+          <Route path="/login" element={<Login />} />
         </Routes>
       </main>
     </div>

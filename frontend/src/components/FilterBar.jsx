@@ -50,13 +50,18 @@ function MultiSelect({ label, options, selected, onChange }) {
   )
 }
 
-// FilterBar renders the filters this page needs. `config` = { items, locations, periods } option arrays.
-// `value` = { items:[], locations:[], periods:[] }; empty array means "all".
+// FilterBar renders the filters this page needs. `config` = { items, locations, periods, zones } option arrays.
+// `value` = { items:[], locations:[], periods:[], zones:[] }; empty array means "all".
 export function FilterBar({ config, value, onChange }) {
   if (!config) return null
+  // when a zone is selected, it implies all its DCs — handled in rowPasses
   return (
     <div className="flex items-center gap-5 px-8 py-3 bg-white border-b border-[#e7ecf2] flex-wrap">
       <span className="text-xs uppercase tracking-wide text-slate2 font-semibold">Filters</span>
+      {config.zones && (
+        <MultiSelect label="Zone" options={config.zones} selected={value.zones || []}
+          onChange={v => onChange({ ...value, zones: v })} />
+      )}
       {config.items && (
         <MultiSelect label="Item" options={config.items} selected={value.items || []}
           onChange={v => onChange({ ...value, items: v })} />
@@ -74,11 +79,17 @@ export function FilterBar({ config, value, onChange }) {
 }
 
 // helper: does a row pass the active filters? empty filter array = all pass.
-export function rowPasses(row, value, { itemKey = 'item_code', locKey = 'location_code', perKey = 'period' } = {}) {
-  const items = value.items || [], locs = value.locations || [], pers = value.periods || []
+// zoneMap = { DC_DEL: 'North', DC_MUM: 'West', ... } for zone filtering
+export function rowPasses(row, value, { itemKey = 'item_code', locKey = 'location_code', perKey = 'period', zoneMap = {} } = {}) {
+  const items = value.items || [], locs = value.locations || [], pers = value.periods || [], zones = value.zones || []
   if (items.length && row[itemKey] != null && !items.includes(row[itemKey])) return false
-  if (locs.length && row[locKey] != null && !locs.includes(row[locKey])) return false
   if (pers.length && row[perKey] != null && !pers.includes(row[perKey])) return false
+  // location filter: direct match OR zone match
+  if (locs.length && row[locKey] != null && !locs.includes(row[locKey])) return false
+  if (zones.length && row[locKey] != null) {
+    const rowZone = zoneMap[row[locKey]]
+    if (rowZone && !zones.includes(rowZone)) return false
+  }
   return true
 }
 

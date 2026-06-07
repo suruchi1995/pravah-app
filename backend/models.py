@@ -330,6 +330,24 @@ class SolverExplanation(TenantMixin, Base):
     reasoning: Mapped[str] = mapped_column(String())
 
 
+class SupplyLane(TenantMixin, Base):
+    """Origin → destination lane for an item (or all items if item_code is null).
+    Captures: who ships what, from where, to where, via which mode, how fast, min lot.
+    This is the explicit item-location association that was previously missing.
+    """
+    __tablename__ = "supply_lanes"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    lane_code: Mapped[str] = mapped_column(String(64), index=True)
+    from_location: Mapped[str] = mapped_column(String(32), index=True)   # supplier_code or location_code
+    to_location: Mapped[str] = mapped_column(String(32), index=True)     # plant or DC location_code
+    item_code: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)  # None = applies to all
+    transport_mode: Mapped[str] = mapped_column(String(32), default="ROAD")
+    lead_time_days: Mapped[float] = mapped_column(Float)
+    min_lot_size: Mapped[float] = mapped_column(Float, default=0.0)
+    min_lot_uom: Mapped[str] = mapped_column(String(16), default="")
+    cost_per_unit: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+
 class DemandOverride(TenantMixin, Base):
     """Planner/data-driven demand adjustments. Source of the override (UI or upload),
     so NOTHING is hardcoded. consensus uses these when present.

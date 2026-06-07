@@ -55,6 +55,17 @@ export const api = {
   capacity: (t = 'apex') => get(`/capacity?tenant=${t}`),
   optimizer: (t = 'apex') => get(`/optimizer?tenant=${t}`),
   master: (table, t = 'apex') => get(`/master/${table}?tenant=${t}`),
+  lanes: (t = 'apex') => get(`/master/supply_lanes?tenant=${t}`),
+  // auth
+  login: async (email, password) => {
+    const r = await fetchResilient(`${BASE}/login`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({email, password}),
+    }, {retries:0, timeoutMs:20000})
+    return parseJson(r)
+  },
+  me: () => get('/me'),
+  parameters: () => get('/parameters'),
   copilot: async (question, tenant = 'apex') => {
     const r = await fetchResilient(`${BASE}/copilot`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },

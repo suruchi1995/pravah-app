@@ -469,11 +469,60 @@ def main():
     results.append(build_production_orders())
     results.append(build_sales_orders())
     results.extend(build_parameters())
-
+    results.append(write_csv("supply_lanes.csv",
+        ["tenant_id","lane_code","from_location","to_location","item_code",
+         "transport_mode","lead_time_days","min_lot_size","min_lot_uom","cost_per_unit"],
+        build_supply_lanes()))
     print("Generated datasets (seed={}):".format(SEED))
     for path, n in results:
         print("  {:32s} {:5d} rows".format(os.path.basename(path), n))
     print("\nOutput dir:", os.path.abspath(OUT_DIR))
+
+
+def build_supply_lanes():
+    """
+    Explicit origin-destination lanes.
+    Two tiers:
+      1. Supplier → Plant  (for every RM/PM supplier, to the plant that uses it)
+      2. Plant → DC        (for every FG, from the plant that makes it)
+    This is the missing 'where does each item flow' data.
+    """
+    rows = []
+    # Tier 1: Supplier → Plant lanes (RM and PM)
+    # SUP_INGA/B/C supply ingredients → Baddi Plant (RM001-RM010, RM016-RM020)
+    # SUP_PKGA/B   supply packaging → both plants (PM001-PM005)
+    sup_plant_lanes = [
+        ("LANE_INGA_BDI","SUP_INGA","PLANT_BDI",None,"ROAD",21,100,"kg",None),
+        ("LANE_INGB_BDI","SUP_INGB","PLANT_BDI",None,"ROAD",28,150,"kg",None),
+        ("LANE_INGB_PUN","SUP_INGB","PLANT_PUN",None,"ROAD",28,150,"kg",None),
+        ("LANE_INGC_BDI","SUP_INGC","PLANT_BDI",None,"ROAD",35,200,"kg",None),
+        ("LANE_INGC_PUN","SUP_INGC","PLANT_PUN",None,"ROAD",35,200,"kg",None),
+        ("LANE_INGD_BDI","SUP_INGD","PLANT_BDI",None,"ROAD",25,100,"kg",None),
+        ("LANE_INGD_PUN","SUP_INGD","PLANT_PUN",None,"ROAD",25,100,"kg",None),
+        ("LANE_INGE_BDI","SUP_INGE","PLANT_BDI",None,"ROAD",30,200,"kg",None),
+        ("LANE_PKGA_BDI","SUP_PKGA","PLANT_BDI",None,"ROAD",14,500,"ea",None),
+        ("LANE_PKGA_PUN","SUP_PKGA","PLANT_PUN",None,"ROAD",14,500,"ea",None),
+        ("LANE_PKGB_BDI","SUP_PKGB","PLANT_BDI",None,"ROAD",21,300,"ea",None),
+        ("LANE_PKGB_PUN","SUP_PKGB","PLANT_PUN",None,"ROAD",21,300,"ea",None),
+    ]
+    # Tier 2: Plant → DC lanes (FG, per item)
+    # FG001-FG005 made at Baddi; FG006-FG010 made at Pune (split by capacity)
+    fg_plant = {f"FG00{i}":"PLANT_BDI" for i in range(1,6)}
+    fg_plant.update({f"FG0{i:02d}":"PLANT_PUN" for i in range(6,11)})
+    dcs = ["DC_DEL","DC_MUM","DC_BLR"]
+    dc_modes = {"DC_DEL":"ROAD","DC_MUM":"ROAD","DC_BLR":"ROAD"}
+    dc_lt   = {"DC_DEL":3,"DC_MUM":4,"DC_BLR":5}   # Baddi-origin lead times
+    dc_lt_p = {"DC_DEL":5,"DC_MUM":2,"DC_BLR":3}   # Pune-origin lead times
+    for fg,plant in fg_plant.items():
+        lt_map = dc_lt if plant=="PLANT_BDI" else dc_lt_p
+        for dc in dcs:
+            rows.append([
+                TENANT_ID, f"LANE_{plant.replace('PLANT_','')}_{dc}_{fg}",
+                plant, dc, fg, dc_modes[dc], lt_map[dc], 50, "ea", None
+            ])
+    for row in sup_plant_lanes:
+        rows.append([TENANT_ID] + list(row))
+    return rows
 
 if __name__ == "__main__":
     main()

@@ -68,6 +68,12 @@ LOADERS = [
         "so_number": ("so_number", s), "item_code": ("item_code", s),
         "location_code": ("location_code", s), "quantity": ("quantity", f),
         "required_date": ("required_date", s), "priority": ("priority", s), "status": ("status", s)}),
+    ("supply_lanes.csv", m.SupplyLane, {
+        "lane_code": ("lane_code", s), "from_location": ("from_location", s),
+        "to_location": ("to_location", s), "item_code": ("item_code", lambda x: x if x else None),
+        "transport_mode": ("transport_mode", s), "lead_time_days": ("lead_time_days", f),
+        "min_lot_size": ("min_lot_size", f), "min_lot_uom": ("min_lot_uom", s),
+        "cost_per_unit": ("cost_per_unit", f)}),
     ("demand_overrides.csv", m.DemandOverride, {
         "item_code": ("item_code", s), "location_code": ("location_code", s),
         "period": ("period", s), "override_qty": ("override_qty", f),

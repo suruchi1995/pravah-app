@@ -365,16 +365,41 @@ def optimizer(tenant: str = Query(DEFAULT_TENANT)):
 def master(table: str, tenant: str = Query(DEFAULT_TENANT)):
     _ensure_seeded(tenant)
     table_map = {
-        "items": (m.Item, ["item_code", "description", "item_type", "category", "uom", "unit_price_or_cost"]),
-        "locations": (m.Location, ["location_code", "location_name", "location_type", "state", "zone"]),
-        "suppliers": (m.Supplier, ["supplier_code", "supplier_name", "supplier_type", "lead_time_days", "moq", "reliability"]),
-        "resources": (m.Resource, ["resource_code", "resource_name", "plant_code", "hours_per_month"]),
+        "items": (m.Item, ["item_code", "description", "item_type", "category", "uom",
+                           "unit_price_or_cost"]),
+        "items_fg": None,   # special filtered views
+        "items_rm": None,
+        "items_pm": None,
+        "items_sfg": None,
+        "locations": (m.Location, ["location_code", "location_name", "location_type",
+                                   "state", "zone"]),
+        "suppliers": (m.Supplier, ["supplier_code", "supplier_name", "supplier_type",
+                                   "lead_time_days", "moq", "reliability"]),
+        "resources": (m.Resource, ["resource_code", "resource_name", "plant_code",
+                                   "hours_per_month"]),
         "bom": (m.Bom, ["parent_item", "component_item", "usage_qty"]),
         "inventory": (m.Inventory, ["item_code", "location_code", "on_hand_qty"]),
-        "demand_history": (m.DemandHistory, ["item_code", "location_code", "period", "quantity"]),
+        "demand_history": (m.DemandHistory, ["item_code", "location_code", "period",
+                                             "quantity"]),
+        "supplier_item_mapping": (m.SupplierItemMapping, ["supplier_code", "item_code",
+                                                          "unit_price", "moq",
+                                                          "lead_time_days"]),
+        "supply_lanes": (m.SupplyLane, ["lane_code", "from_location", "to_location",
+                                        "item_code", "transport_mode", "lead_time_days",
+                                        "min_lot_size", "min_lot_uom"]),
     }
     if table not in table_map:
         raise HTTPException(404, f"Unknown table '{table}'.")
+
+    # Special filtered item views
+    if table.startswith("items_"):
+        type_map = {"items_fg": "FG", "items_rm": "RM", "items_pm": "PM", "items_sfg": "SFG"}
+        itype = type_map[table]
+        with Session() as s:
+            rows = s.query(m.Item).filter_by(tenant_id=tenant, item_type=itype).all()
+            return rows_to_dicts(rows, ["item_code", "description", "item_type",
+                                        "category", "uom", "unit_price_or_cost"])
+
     model, fields = table_map[table]
     with Session() as s:
         rows = s.query(model).filter_by(tenant_id=tenant).all()

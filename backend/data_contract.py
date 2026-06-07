@@ -97,6 +97,13 @@ CONTRACT = {
         "columns": ["item_code", "min_months_cover", "max_months_cover"],
         "key_cols": ["item_code"], "numeric_cols": ["min_months_cover", "max_months_cover"],
     },
+    "supply_lanes": {
+        "required": False,
+        "recommended": True,
+        "columns": ["lane_code","from_location","to_location","item_code",
+                    "transport_mode","lead_time_days","min_lot_size","min_lot_uom"],
+        "key_cols": ["lane_code"], "numeric_cols": ["lead_time_days","min_lot_size"],
+    },
     "demand_overrides": {
         "required": False,
         "columns": ["item_code", "location_code", "period", "override_qty", "override_type", "reason", "source"],
