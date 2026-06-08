@@ -418,6 +418,7 @@ class User(Base):
     full_name: Mapped[str] = mapped_column(String(128))
     roles_csv: Mapped[str] = mapped_column(String(256), default="viewer")  # e.g. "planner,approver"
     is_active: Mapped[bool] = mapped_column(default=True)
+    must_change_password: Mapped[bool] = mapped_column(default=False)  # forced on first login after admin-create/reset
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
     @property

@@ -18,6 +18,7 @@ import Optimizer from './pages/Optimizer.jsx'
 import Copilot from './pages/Copilot.jsx'
 import Login from './pages/Login.jsx'
 import Approvals from './pages/Approvals.jsx'
+import Admin from './pages/Admin.jsx'
 import NetworkPage from './pages/Network.jsx'
 
 // Sidebar grouped to show the planning flow order explicitly (R2-18)
@@ -40,6 +41,7 @@ const NAV_GROUPS = [
   { heading: 'Tools', items: [
     { to: '/copilot', label: 'AI Copilot', icon: Bot },
     { to: '/approvals', label: 'Approvals', icon: ClipboardCheck },
+    { to: '/admin', label: 'Admin', icon: ShieldCheck },
   ]},
 ]
 
@@ -139,6 +141,7 @@ function MainLayout() {
           <Route path="/optimizer" element={<Optimizer />} />
           <Route path="/copilot" element={<Copilot />} />
           <Route path="/approvals" element={<Approvals />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

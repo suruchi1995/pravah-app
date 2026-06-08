@@ -113,7 +113,8 @@ def login(body: LoginBody):
         s.add(m.AuditLog(tenant_id=u.tenant_id, user_email=u.email, action="login", detail=""))
         s.commit()
         return {"token": authmod.make_token(u),
-                "user": {"email": u.email, "name": u.full_name, "roles": u.roles, "tenant": u.tenant_id}}
+                "user": {"email": u.email, "name": u.full_name, "roles": u.roles,
+                         "tenant": u.tenant_id, "must_change_password": u.must_change_password}}
 
 
 @app.get("/api/me")
@@ -123,10 +124,16 @@ def me(user=Depends(current_user)):
 
 class NewUserBody(BaseModel):
     email: str
-    password: str
     full_name: str
     roles: list[str]
     tenant: str = None
+    password: str = None   # optional; if omitted, a temp password is generated
+
+
+def _generate_temp_password(n=10):
+    import secrets, string
+    alphabet = string.ascii_letters + string.digits
+    return "".join(secrets.choice(alphabet) for _ in range(n))
 
 
 @app.get("/api/users")
@@ -134,22 +141,88 @@ def list_users(user=Depends(require_roles("admin"))):
     with Session() as s:
         rows = s.query(m.User).filter_by(tenant_id=user["tenant"]).all()
         return [{"email": u.email, "full_name": u.full_name, "roles": u.roles,
-                 "is_active": u.is_active, "tenant": u.tenant_id} for u in rows]
+                 "is_active": u.is_active, "must_change_password": u.must_change_password,
+                 "tenant": u.tenant_id} for u in rows]
 
 
 @app.post("/api/users")
 def create_user(body: NewUserBody, user=Depends(require_roles("admin"))):
     tenant = body.tenant or user["tenant"]
+    temp_pw = body.password or _generate_temp_password()
     with Session() as s:
         if s.query(m.User).filter_by(email=body.email.lower().strip()).first():
             raise HTTPException(400, "A user with that email already exists.")
         s.add(m.User(tenant_id=tenant, email=body.email.lower().strip(),
-                     password_hash=authmod.hash_password(body.password),
-                     full_name=body.full_name, roles_csv=",".join(body.roles), is_active=True))
+                     password_hash=authmod.hash_password(temp_pw),
+                     full_name=body.full_name, roles_csv=",".join(body.roles),
+                     is_active=True, must_change_password=True))
         s.add(m.AuditLog(tenant_id=user["tenant"], user_email=user["sub"],
                          action="create_user", detail=f"{body.email} roles={body.roles}"))
         s.commit()
-        return {"ok": True, "email": body.email}
+        # return the temp password ONCE so the admin can share it
+        return {"ok": True, "email": body.email, "temp_password": temp_pw,
+                "note": "Share this password with the user. They'll be asked to change it on first login."}
+
+
+class UserActionBody(BaseModel):
+    email: str
+
+
+@app.post("/api/users/deactivate")
+def deactivate_user(body: UserActionBody, user=Depends(require_roles("admin"))):
+    with Session() as s:
+        u = s.query(m.User).filter_by(email=body.email.lower().strip(), tenant_id=user["tenant"]).first()
+        if not u: raise HTTPException(404, "User not found")
+        if u.email == user["sub"]: raise HTTPException(400, "You cannot deactivate your own account.")
+        u.is_active = False
+        s.add(m.AuditLog(tenant_id=user["tenant"], user_email=user["sub"], action="deactivate_user", detail=body.email))
+        s.commit()
+        return {"ok": True}
+
+
+@app.post("/api/users/activate")
+def activate_user(body: UserActionBody, user=Depends(require_roles("admin"))):
+    with Session() as s:
+        u = s.query(m.User).filter_by(email=body.email.lower().strip(), tenant_id=user["tenant"]).first()
+        if not u: raise HTTPException(404, "User not found")
+        u.is_active = True
+        s.add(m.AuditLog(tenant_id=user["tenant"], user_email=user["sub"], action="activate_user", detail=body.email))
+        s.commit()
+        return {"ok": True}
+
+
+@app.post("/api/users/reset-password")
+def reset_password(body: UserActionBody, user=Depends(require_roles("admin"))):
+    new_pw = _generate_temp_password()
+    with Session() as s:
+        u = s.query(m.User).filter_by(email=body.email.lower().strip(), tenant_id=user["tenant"]).first()
+        if not u: raise HTTPException(404, "User not found")
+        u.password_hash = authmod.hash_password(new_pw)
+        u.must_change_password = True
+        s.add(m.AuditLog(tenant_id=user["tenant"], user_email=user["sub"], action="reset_password", detail=body.email))
+        s.commit()
+        return {"ok": True, "email": body.email, "temp_password": new_pw,
+                "note": "Share this with the user; they'll change it on next login."}
+
+
+class ChangePasswordBody(BaseModel):
+    current_password: str
+    new_password: str
+
+
+@app.post("/api/change-password")
+def change_password(body: ChangePasswordBody, user=Depends(current_user)):
+    if len(body.new_password) < 6:
+        raise HTTPException(400, "New password must be at least 6 characters.")
+    with Session() as s:
+        u = s.query(m.User).filter_by(email=user["sub"], tenant_id=user["tenant"]).first()
+        if not u or not authmod.verify_password(body.current_password, u.password_hash):
+            raise HTTPException(401, "Current password is incorrect.")
+        u.password_hash = authmod.hash_password(body.new_password)
+        u.must_change_password = False
+        s.add(m.AuditLog(tenant_id=user["tenant"], user_email=user["sub"], action="change_password", detail=""))
+        s.commit()
+        return {"ok": True}
 
 
 @app.get("/api/template")

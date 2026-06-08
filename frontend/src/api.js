@@ -66,6 +66,11 @@ export const api = {
   },
   me: () => get('/me'),
   parameters: () => get('/parameters'),
+  // admin
+  listUsers: (token) => fetch(`${BASE}/users`, { headers: { Authorization: 'Bearer ' + token } }).then(parseJson),
+  createUser: (token, body) => fetch(`${BASE}/users`, { method:'POST', headers:{ Authorization:'Bearer '+token, 'Content-Type':'application/json' }, body: JSON.stringify(body) }).then(parseJson),
+  userAction: (token, action, email) => fetch(`${BASE}/users/${action}`, { method:'POST', headers:{ Authorization:'Bearer '+token, 'Content-Type':'application/json' }, body: JSON.stringify({ email }) }).then(parseJson),
+  changePassword: (token, current_password, new_password) => fetch(`${BASE}/change-password`, { method:'POST', headers:{ Authorization:'Bearer '+token, 'Content-Type':'application/json' }, body: JSON.stringify({ current_password, new_password }) }).then(parseJson),
   copilot: async (question, tenant = 'apex') => {
     const r = await fetchResilient(`${BASE}/copilot`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },

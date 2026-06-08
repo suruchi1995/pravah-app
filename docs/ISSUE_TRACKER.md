@@ -251,3 +251,17 @@ R2-28 (optimizer resource filter), R2-35 (sidebar collapsible desktop), R2-36 (c
 **Batch A remaining:** R2-5 (supplier filter — suppliers don't appear in the planning filters since they're a sourcing dimension, not item/location; will add to Sourcing tab filter), R2-28 (optimizer resource filter — already has item filter; will add resource).
 
 **Still queued — Batch B sessions:** B1 admin workspace, B2 inline edit + override + re-plan, B3 scenario selection, B4 user profile. Enhancements: R2-12/14 (cross-filter), R2-23 (MRP chart), R2-29/30 (optimizer drilldown+warnings), R2-37 (branding).
+
+---
+
+## BATCH B1 — Admin workspace — BUILT & PUSHED (awaiting retest)
+
+| Issue | What was built |
+|-------|----------------|
+| R2-1a / R2-33 | Full `/admin` screen (admins only): user list with roles + active status; "Add user" form with name/email + role multi-select; **auto-generated temporary password** shown once with copy button; per-user actions: reset password (new temp pw), deactivate, reactivate. |
+| (supports R2-34) | `/api/change-password` endpoint; forced password change on first login — new users (and password-resets) must set a new password before entering the app. |
+
+**Backend:** must_change_password flag on users; endpoints /api/users (list/create), /api/users/{deactivate,activate,reset-password}, /api/change-password. Admin cannot deactivate self. 11/11 admin backend checks pass. Migration adds the new column to stale user tables.
+**Frontend:** Admin.jsx (gated to admin role), Login.jsx now handles forced password change, Admin added to sidebar Tools group.
+
+**Next Batch B sessions:** B2 (inline edit + override + approval-gated re-plan), B3 (scenario selection), B4 (user profile page).

@@ -8,6 +8,9 @@ export default function Login({ onLogin }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [mustChange, setMustChange] = useState(false)  // forced password change
+  const [tmpToken, setTmpToken] = useState(null)
+  const [newPw, setNewPw] = useState('')
   const navigate = useNavigate()
 
   async function submit() {
@@ -16,6 +19,13 @@ export default function Login({ onLogin }) {
     try {
       const r = await api.login(email, password)
       if (r.token) {
+        if (r.user?.must_change_password) {
+          // hold the session; require a new password before entering
+          setTmpToken(r.token)
+          setMustChange(true)
+          setBusy(false)
+          return
+        }
         localStorage.setItem('pravah_token', r.token)
         localStorage.setItem('pravah_user', JSON.stringify(r.user))
         onLogin && onLogin(r.user)
@@ -26,6 +36,23 @@ export default function Login({ onLogin }) {
     } catch (e) {
       setError('Could not reach the server. Please try again.')
     }
+    setBusy(false)
+  }
+
+  async function submitNewPassword() {
+    if (newPw.length < 6) { setError('New password must be at least 6 characters.'); return }
+    setBusy(true); setError('')
+    try {
+      const r = await api.changePassword(tmpToken, password, newPw)
+      if (r.ok) {
+        // re-login with the new password to get a clean session
+        const lr = await api.login(email, newPw)
+        localStorage.setItem('pravah_token', lr.token)
+        localStorage.setItem('pravah_user', JSON.stringify(lr.user))
+        onLogin && onLogin(lr.user)
+        navigate('/')
+      } else setError(r.detail || 'Could not change password.')
+    } catch { setError('Could not change password.') }
     setBusy(false)
   }
 
@@ -41,28 +68,45 @@ export default function Login({ onLogin }) {
             <div className="text-xs uppercase tracking-widest text-slate2">Planning OS</div>
           </div>
         </div>
-        <h2 className="font-display text-xl text-ink mb-6">Sign in</h2>
+        <h2 className="font-display text-xl text-ink mb-6">{mustChange ? 'Set a new password' : 'Sign in'}</h2>
         {error && <div className="mb-4 text-sm text-rust bg-rust/10 rounded-lg px-4 py-3">{error}</div>}
-        <div className="space-y-4">
-          <div>
-            <label className="text-xs uppercase tracking-wide text-slate2 mb-1 block">Email</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-              onKeyDown={e => e.key==='Enter' && submit()}
-              className="w-full border border-[#d6deea] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand"
-              placeholder="you@company.com" />
+        {mustChange ? (
+          <div className="space-y-4">
+            <p className="text-sm text-slate2">This is your first sign-in. Please choose a new password.</p>
+            <div>
+              <label className="text-xs uppercase tracking-wide text-slate2 mb-1 block">New password</label>
+              <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)}
+                onKeyDown={e => e.key==='Enter' && submitNewPassword()}
+                className="w-full border border-[#d6deea] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand"
+                placeholder="At least 6 characters" />
+            </div>
+            <button onClick={submitNewPassword} disabled={busy}
+              className="w-full bg-brand text-white rounded-xl py-2.5 text-sm font-medium hover:bg-branddk disabled:opacity-50 mt-2">
+              {busy ? 'Saving…' : 'Set password & continue'}
+            </button>
           </div>
-          <div>
-            <label className="text-xs uppercase tracking-wide text-slate2 mb-1 block">Password</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-              onKeyDown={e => e.key==='Enter' && submit()}
-              className="w-full border border-[#d6deea] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand"
-              placeholder="••••••••" />
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs uppercase tracking-wide text-slate2 mb-1 block">Email</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key==='Enter' && submit()}
+                className="w-full border border-[#d6deea] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand"
+                placeholder="you@company.com" />
+            </div>
+            <div>
+              <label className="text-xs uppercase tracking-wide text-slate2 mb-1 block">Password</label>
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+                onKeyDown={e => e.key==='Enter' && submit()}
+                className="w-full border border-[#d6deea] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-brand"
+                placeholder="••••••••" />
+            </div>
+            <button onClick={submit} disabled={busy}
+              className="w-full bg-brand text-white rounded-xl py-2.5 text-sm font-medium hover:bg-branddk disabled:opacity-50 mt-2">
+              {busy ? 'Signing in…' : 'Sign in'}
+            </button>
           </div>
-          <button onClick={submit} disabled={busy}
-            className="w-full bg-brand text-white rounded-xl py-2.5 text-sm font-medium hover:bg-branddk disabled:opacity-50 mt-2">
-            {busy ? 'Signing in…' : 'Sign in'}
-          </button>
-        </div>
+        )}
         <p className="text-xs text-slate2 mt-6 text-center">Contact your admin to create an account.</p>
       </div>
     </div>
