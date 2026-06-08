@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api } from '../api'
+ import { ScenarioNote } from '../context/ScenarioContext.jsx'
 import { useAsync, PageHeader, Grid, Loading, ErrorBox } from '../components/ui'
 import { FilterBar, rowPasses } from '../components/FilterBar'
 import { Info } from 'lucide-react'
@@ -40,6 +41,7 @@ export default function Netting() {
         </select>
       </PageHeader>
       <FilterBar config={periodCfg} value={filters} onChange={setFilters} />
+      <ScenarioNote page="netting" />
       <div className="p-8 space-y-6">
         {showHelp && (
           <div className="card p-5 border-l-4 border-brand text-sm space-y-2">

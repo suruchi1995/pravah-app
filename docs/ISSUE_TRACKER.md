@@ -326,3 +326,29 @@ R2-28 (optimizer resource filter), R2-35 (sidebar collapsible desktop), R2-36 (c
 - ✅ B4 — User profile page
 
 **Remaining enhancements:** R2-12/14 (cross-filter linking), R2-23 (MRP chart), R2-29/30 (optimizer resource drilldown + over/under-use warnings), R2-37 (branding polish), R2-31 (copilot feedback), R2-5 (supplier filter on Sourcing tab).
+
+---
+
+## BATCH B3 — Global scenario selection — BUILT & PUSHED
+
+| Issue | What was built |
+|-------|----------------|
+| R2-25 | Scenario explanation: the optimizer runs 3 objectives (min_cost / max_service / balanced). The global scenario bar + Optimizer page explain what each optimises. |
+| R2-26 | **Global scenario selector** (top bar on Dashboard, Handshake, Netting, MRP, Capacity, Optimizer). Selection persists across navigation + reload (localStorage + React context). Optimizer page is driven by it; Dashboard scenario cards highlight + set it. |
+
+**HONEST SCOPING NOTE (important):** In the current engine, only the OPTIMIZER's production plan differs by scenario. The demand plan, netting, MRP, and capacity load are computed UPSTREAM of scenario optimization (from the consensus demand plan), so they are the SAME across scenarios today. Rather than fake per-scenario differences on those pages, each shows an honest banner ("ScenarioNote") explaining this and pointing to the Optimizer to compare. 
+
+**TRUE per-scenario downstream re-plan** (netting/capacity recomputed from each scenario's chosen production plan) is a real engine project — flagged as a future enhancement, NOT faked. Logged below.
+
+### NEW BACKLOG ITEM
+- **R2-26b (engine):** Make netting/MRP/capacity recompute downstream of the selected scenario's production plan so the whole plan genuinely differs by scenario. Significant engine rework. Deferred, not faked.
+
+---
+
+## BATCH B — COMPLETE
+- ✅ B1 — Admin workspace
+- ✅ B2 — Inline editing + demand override + approval-gated re-plan
+- ✅ B3 — Global scenario selection (display-level, honest; true downstream re-plan deferred as R2-26b)
+- ✅ B4 — User profile page
+
+**Remaining enhancements (post Batch B):** R2-12/14 (cross-filter linking), R2-23 (MRP chart), R2-27 full (optimizer resource editing done; drilldown next), R2-29/30 (optimizer resource drilldown + over/under-use warnings), R2-37 (branding polish), R2-31 (copilot feedback), R2-5 (supplier filter on Sourcing tab), R2-26b (true per-scenario downstream re-plan).

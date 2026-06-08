@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api } from '../api'
+ import { ScenarioNote } from '../context/ScenarioContext.jsx'
 import { useAsync, PageHeader, Grid, Loading, ErrorBox } from '../components/ui'
 import { FilterBar, rowPasses, deriveOptions } from '../components/FilterBar'
 
@@ -23,6 +24,7 @@ export default function MRP() {
     <>
       <PageHeader title="Supply Planning — MRP Explosion" subtitle="Finished-good plans exploded through the multi-level BOM into dependent demand for semi-finished, raw and packaging materials." />
       <FilterBar config={cfg} value={filters} onChange={setFilters} />
+      <ScenarioNote page="mrp" />
       <div className="p-8"><div className="card p-5"><Grid rows={rows} columns={cols} /></div></div>
     </>
   )

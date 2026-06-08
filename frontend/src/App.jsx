@@ -21,6 +21,7 @@ import Approvals from './pages/Approvals.jsx'
 import Admin from './pages/Admin.jsx'
 import Profile from './pages/Profile.jsx'
 import NetworkPage from './pages/Network.jsx'
+import { ScenarioProvider, useScenario, SCENARIO_LABELS, SCENARIOS } from './context/ScenarioContext.jsx'
 
 // Sidebar grouped to show the planning flow order explicitly (R2-18)
 const NAV_GROUPS = [
@@ -109,6 +110,28 @@ function Sidebar({ open, setOpen, collapsed, setCollapsed, user }) {
   )
 }
 
+function GlobalScenarioBar() {
+  const { scenario, setScenario } = useScenario()
+  const loc = useLocation()
+  // Only show on pages whose data is driven by the selected scenario
+  const SHOW_ON = ['/', '/handshake', '/netting', '/mrp', '/capacity', '/optimizer']
+  if (!SHOW_ON.includes(loc.pathname)) return null
+  return (
+    <div className="flex items-center gap-3 px-8 py-2 bg-mist/60 border-b border-[#e7ecf2]">
+      <span className="text-xs uppercase tracking-wide text-slate2 font-semibold">Planning scenario</span>
+      <div className="flex gap-1">
+        {SCENARIOS.map(sc => (
+          <button key={sc} onClick={() => setScenario(sc)}
+            className={`text-xs px-3 py-1 rounded-full border transition ${scenario === sc ? 'bg-brand text-white border-brand' : 'border-[#d6deea] text-slate2 hover:bg-white'}`}>
+            {SCENARIO_LABELS[sc]}
+          </button>
+        ))}
+      </div>
+      <span className="text-xs text-slate2 ml-auto hidden md:inline">All scenario-driven pages reflect this choice</span>
+    </div>
+  )
+}
+
 function MainLayout() {
   const loc = useLocation()
   const [open, setOpen] = useState(false)
@@ -128,6 +151,7 @@ function MainLayout() {
       {open && <div className="md:hidden fixed inset-0 bg-black/40 z-40" onClick={() => setOpen(false)} />}
       <Sidebar open={open} setOpen={setOpen} collapsed={collapsed} setCollapsed={setCollapsed} user={user} />
       <main className="flex-1 min-w-0 pt-14 md:pt-0">
+        <GlobalScenarioBar />
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/data" element={<DataHub />} />
@@ -153,9 +177,11 @@ function MainLayout() {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/*" element={<MainLayout />} />
-    </Routes>
+    <ScenarioProvider>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/*" element={<MainLayout />} />
+      </Routes>
+    </ScenarioProvider>
   )
 }

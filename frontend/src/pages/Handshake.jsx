@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api } from '../api'
+ import { ScenarioNote } from '../context/ScenarioContext.jsx'
 import { useAsync, PageHeader, Grid, Loading, ErrorBox, fmtMoney, fmtPct } from '../components/ui'
 import { FilterBar, rowPasses, deriveOptions } from '../components/FilterBar'
 import { ChangeRequestModal, canEditData } from '../components/ChangeRequestModal'
@@ -60,6 +61,7 @@ export default function Handshake() {
         </button>
       </PageHeader>
       <FilterBar config={cfg} value={filters} onChange={setFilters} />
+      <ScenarioNote page="handshake" />
 
       {/* Override builder modal */}
       {ovOpen && !ovConfirmOpen && (

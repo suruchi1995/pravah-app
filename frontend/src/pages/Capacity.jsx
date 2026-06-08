@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api } from '../api'
+ import { ScenarioNote } from '../context/ScenarioContext.jsx'
 import { useAsync, PageHeader, Grid, Loading, ErrorBox, fmtPct } from '../components/ui'
 import { FilterBar, rowPasses } from '../components/FilterBar'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, Legend } from 'recharts'
@@ -44,6 +45,7 @@ export default function Capacity() {
     <>
       <PageHeader title="Capacity Planning" subtitle="Finite-capacity load over time. Above 100% = overloaded; that resource is the binding constraint the optimizer must plan around." />
       <FilterBar config={{ items: cfg.items, periods: cfg.periods }} value={filters} onChange={setFilters} />
+      <ScenarioNote page="capacity" />
       <div className="p-8 space-y-6">
         <div className="card p-6">
           <h3 className="font-display text-xl mb-4">Utilisation over time — by resource</h3>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useAsync, PageHeader, Loading, ErrorBox, fmtMoney, fmtPct } from '../components/ui'
 import { FilterBar, rowPasses, deriveOptions } from '../components/FilterBar'
+import { useScenario } from '../context/ScenarioContext.jsx'
 import { IndianRupee, Target, Activity, AlertTriangle, TrendingUp, X } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 
@@ -37,6 +38,7 @@ function BottleneckModal({ bottlenecks, onClose }) {
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const { scenario, setScenario } = useScenario()
   const [filters, setFilters] = useState({ items: [], locations: [], periods: [] })
   const [showBottleneck, setShowBottleneck] = useState(false)
   const s = useAsync(() => api.summary())
@@ -109,10 +111,12 @@ export default function Dashboard() {
           <h3 className="font-display text-xl mb-3">Optimization scenarios</h3>
           <div className="grid grid-cols-3 gap-4">
             {Object.entries(d.scenarios || {}).map(([k,v]) => (
-              <div key={k} className="border border-[#e7ecf2] rounded-xl p-4 cursor-pointer hover:border-brand" onClick={() => navigate('/optimizer')}>
-                <div className="text-xs uppercase tracking-wide text-slate2">{k.replace('_',' ')}</div>
+              <div key={k}
+                className={`border rounded-xl p-4 cursor-pointer transition ${scenario === k ? 'border-brand ring-1 ring-brand bg-brand/5' : 'border-[#e7ecf2] hover:border-brand'}`}
+                onClick={() => { setScenario(k); navigate('/optimizer') }}>
+                <div className="text-xs uppercase tracking-wide text-slate2">{k.replace('_',' ')}{scenario === k && ' · selected'}</div>
                 <div className="font-display text-lg mt-1 capitalize">{v.status?.toLowerCase()}</div>
-                <div className="text-xs text-slate2 mt-1">Click to explore →</div>
+                <div className="text-xs text-slate2 mt-1">Click to select &amp; explore →</div>
               </div>
             ))}
           </div>

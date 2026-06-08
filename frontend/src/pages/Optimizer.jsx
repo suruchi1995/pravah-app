@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { api } from '../api'
 import { useAsync, PageHeader, Loading, ErrorBox } from '../components/ui'
 import { FilterBar } from '../components/FilterBar'
+import { useScenario } from '../context/ScenarioContext.jsx'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts'
 
 const LABELS = { min_cost: 'Minimise Cost', max_service: 'Maximise Service', balanced: 'Balanced' }
 
 export default function Optimizer() {
   const { loading, data, error } = useAsync(() => api.optimizer())
-  const [sel, setSel] = useState('min_cost')
+  const { scenario: sel, setScenario: setSel } = useScenario()
   const [filters, setFilters] = useState({ items: [], locations: [], periods: [] })
   if (loading) return <><PageHeader title="Optimization Workbench" /><Loading /></>
   if (error) return <ErrorBox msg={error} />
