@@ -15,30 +15,51 @@ from backend import models as m
 JWT_SECRET = os.environ.get("JWT_SECRET", "dev-secret-change-in-render")
 TOKEN_TTL_SECONDS = 60 * 60 * 12  # 12 hours
 
-# ---- password hashing (bcrypt via passlib if available, else hashlib fallback) ----
+# ---- password hashing (bcrypt if available, else hashlib fallback) ----
+# Robust across deploys: verify auto-detects the stored hash format, so a row
+# hashed with one scheme still verifies even if the other scheme is active now.
+def _pbkdf2_hash(pw: str) -> str:
+    salt = os.urandom(16)
+    dk = hashlib.pbkdf2_hmac("sha256", pw.encode(), salt, 100000)
+    return "pbkdf2$" + base64.b64encode(salt).decode() + "$" + base64.b64encode(dk).decode()
+
+def _pbkdf2_verify(pw: str, hashed: str) -> bool:
+    try:
+        _, salt_b64, dk_b64 = hashed.split("$")
+        salt = base64.b64decode(salt_b64)
+        dk = hashlib.pbkdf2_hmac("sha256", pw.encode(), salt, 100000)
+        return hmac.compare_digest(base64.b64encode(dk).decode(), dk_b64)
+    except Exception:
+        return False
+
 try:
     import bcrypt
-    def hash_password(pw: str) -> str:
-        return bcrypt.hashpw(pw.encode(), bcrypt.gensalt()).decode()
-    def verify_password(pw: str, hashed: str) -> bool:
-        try:
-            return bcrypt.checkpw(pw.encode(), hashed.encode())
-        except Exception:
-            return False
+    _HAS_BCRYPT = True
 except ImportError:
-    # fallback: PBKDF2 (still salted+hashed; bcrypt preferred in prod)
-    def hash_password(pw: str) -> str:
-        salt = os.urandom(16)
-        dk = hashlib.pbkdf2_hmac("sha256", pw.encode(), salt, 100000)
-        return "pbkdf2$" + base64.b64encode(salt).decode() + "$" + base64.b64encode(dk).decode()
-    def verify_password(pw: str, hashed: str) -> bool:
+    _HAS_BCRYPT = False
+
+def hash_password(pw: str) -> str:
+    # bcrypt has a hard 72-byte limit; truncate defensively so hashpw never raises
+    if _HAS_BCRYPT:
         try:
-            _, salt_b64, dk_b64 = hashed.split("$")
-            salt = base64.b64decode(salt_b64)
-            dk = hashlib.pbkdf2_hmac("sha256", pw.encode(), salt, 100000)
-            return hmac.compare_digest(base64.b64encode(dk).decode(), dk_b64)
+            return bcrypt.hashpw(pw.encode()[:72], bcrypt.gensalt()).decode()
         except Exception:
-            return False
+            return _pbkdf2_hash(pw)
+    return _pbkdf2_hash(pw)
+
+def verify_password(pw: str, hashed: str) -> bool:
+    if not hashed:
+        return False
+    try:
+        # detect format by prefix — independent of which scheme is currently active
+        if hashed.startswith("pbkdf2$"):
+            return _pbkdf2_verify(pw, hashed)
+        if hashed.startswith("$2") and _HAS_BCRYPT:   # bcrypt hashes start with $2a/$2b/$2y
+            return bcrypt.checkpw(pw.encode()[:72], hashed.encode())
+        # unknown/legacy format — fail closed, never raise
+        return False
+    except Exception:
+        return False
 
 
 # ---- minimal JWT (HS256), no external lib ----

@@ -19,6 +19,7 @@ import Copilot from './pages/Copilot.jsx'
 import Login from './pages/Login.jsx'
 import Approvals from './pages/Approvals.jsx'
 import Admin from './pages/Admin.jsx'
+import Profile from './pages/Profile.jsx'
 import NetworkPage from './pages/Network.jsx'
 
 // Sidebar grouped to show the planning flow order explicitly (R2-18)
@@ -142,6 +143,7 @@ function MainLayout() {
           <Route path="/copilot" element={<Copilot />} />
           <Route path="/approvals" element={<Approvals />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

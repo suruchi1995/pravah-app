@@ -282,3 +282,22 @@ R2-28 (optimizer resource filter), R2-35 (sidebar collapsible desktop), R2-36 (c
 
 **Remaining Batch B:** B3 (global scenario selection R2-25/26), B4 (user profile page R2-34).
 **Remaining enhancements:** R2-12/14 (cross-filter), R2-23 (MRP chart), R2-29/30 (optimizer resource drilldown + over/under-use warnings), R2-37 (branding polish), R2-31 (copilot feedback), R2-5 (supplier filter on Sourcing tab).
+
+---
+
+## LOGIN 500 FIX + BATCH B4 — BUILT & PUSHED
+
+### 🔴 Login Internal Server Error — FIXED
+- **Root cause:** the stored admin password hash could be in a format the active hashing scheme couldn't read across deploys (bcrypt vs pbkdf2 mismatch), and `bcrypt.checkpw` could throw → raw 500.
+- **Fix (3 layers):**
+  1. `verify_password` now auto-detects hash format by prefix (`$2`=bcrypt, `pbkdf2$`=pbkdf2) and never raises — fails closed to a clean 401.
+  2. `hash_password` truncates to bcrypt's 72-byte limit defensively.
+  3. Login endpoint wrapped in try/except (never leaks a 500) + **self-heals** the bootstrap admin: if the stored hash is unreadable and the default password is used, it re-hashes and lets the admin in.
+- Verified: garbage admin hash → 200 via self-heal; wrong password → clean 401; no path 500s.
+
+### B4 — User Profile page (R2-34) — DONE
+| Issue | What was built |
+|-------|----------------|
+| R2-34 | `/profile` page: identity card (name, email, role badges), change-password form, "Changes I've requested" list, "Approvals I've made" list, sign-out. Linked from the sidebar user footer. |
+
+**Batch B status:** B1 ✅ Admin · B2 ✅ inline edit/override · B4 ✅ profile · **B3 (scenario selection) is the only remaining Batch B item.**
