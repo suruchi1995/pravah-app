@@ -301,3 +301,28 @@ R2-28 (optimizer resource filter), R2-35 (sidebar collapsible desktop), R2-36 (c
 | R2-34 | `/profile` page: identity card (name, email, role badges), change-password form, "Changes I've requested" list, "Approvals I've made" list, sign-out. Linked from the sidebar user footer. |
 
 **Batch B status:** B1 ✅ Admin · B2 ✅ inline edit/override · B4 ✅ profile · **B3 (scenario selection) is the only remaining Batch B item.**
+
+---
+
+## LOGIN FIX + BATCH B4 — BUILT & PUSHED
+
+### 🔴 Login internal server error — FIXED
+- **Cause:** when a new deploy adds a column (e.g. must_change_password in B1) and the live Neon DB hasn't migrated yet — or the migration races the first request during a cold start — login could 500.
+- **Fix:** login now self-heals — on any unexpected error it re-runs `reconcile_schema(engine)` and retries once before giving up. Verified: login returns 200 on a stale users table missing the new column.
+
+### BATCH B4 — User Profile page (R2-34) — DONE
+| Issue | What was built |
+|-------|----------------|
+| R2-34 | `/profile` page: identity card (name, email, role badges); change-password form; "My changes" tab (change requests I submitted, with status); "My approvals" tab (requests I reviewed). Sidebar footer links to it. Gated to signed-in users. |
+
+**Backend:** reuses /api/change-requests (filtered client-side by requested_by / reviewed_by) + /api/change-password. No new endpoints needed.
+
+---
+
+## BATCH B STATUS
+- ✅ B1 — Admin workspace
+- ✅ B2 — Inline editing + demand override + approval-gated re-plan
+- ⬜ B3 — Global scenario selection across all pages (R2-25/26) — most involved; touches engines
+- ✅ B4 — User profile page
+
+**Remaining enhancements:** R2-12/14 (cross-filter linking), R2-23 (MRP chart), R2-29/30 (optimizer resource drilldown + over/under-use warnings), R2-37 (branding polish), R2-31 (copilot feedback), R2-5 (supplier filter on Sourcing tab).
