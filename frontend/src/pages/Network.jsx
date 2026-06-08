@@ -69,7 +69,7 @@ export default function Network() {
         <text x={n.x+14} y={n.y+18} fontSize={12} fontWeight={600} fill="#1a2332">{n.location_name||n.supplier_name}</text>
         {n.kind==='dc' && n.m && <text x={n.x+14} y={n.y+34} fontSize={10} fill="#475569">fill {Math.round((n.m.supply/(n.m.demand||1))*100)}% · risk {n.m.risk>=1000?'₹'+Math.round(n.m.risk/1000)+'k':'₹'+Math.round(n.m.risk)}</text>}
         {n.kind==='sup' && <text x={n.x+14} y={n.y+34} fontSize={10} fill="#475569">{n.supplier_type}</text>}
-        {n.kind==='plant' && <text x={n.x+14} y={n.y+34} fontSize={10} fill="#475569">{n.zone} · {n.state}</text>}
+        {n.kind==='plant' && <text x={n.x+14} y={n.y+34} fontSize={10} fill="#475569">Plant</text>}
       </g>
     )
   }

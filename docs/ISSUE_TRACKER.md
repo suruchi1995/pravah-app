@@ -230,3 +230,24 @@ R2-28 (optimizer resource filter), R2-35 (sidebar collapsible desktop), R2-36 (c
 **Still in Batch A queue (next sub-push):** R2-4 (column resize), R2-5 (supplier filter), R2-6/7 (data hub filters), R2-8 (combine items tab), R2-9 (lanes+supplier-item tab), R2-13 (remove clutter), R2-19/22/24/28 (page filters).
 
 **Note:** Batch A turned out larger than one push. Auth blockers + network blocker + sidebar + expiry + segmentation engine done first (most critical). Remaining UI-filter items in next push.
+
+---
+
+## BATCH A part 2 — BUILT & PUSHED (awaiting retest)
+
+| Issue | What was fixed |
+|-------|----------------|
+| R2-4 | Grid headers now wrap (autoHeaderHeight + wrapHeaderText) so they're fully visible; columns resizable + size-to-fit on load |
+| R2-6 | Data Hub now has global Item/Location filter (auto-shown on tabs that have those columns) |
+| R2-7 | Data Hub filters use the multi-select dropdown component (with All) |
+| R2-8 | All item types combined into one "Items" tab with a Type column (instead of 4 separate tabs) |
+| R2-9 | "Sourcing & Lanes" tab merges supplier-item mapping + supply lanes; shows item, from, to, transmode, lead time, MOQ |
+| R2-13 | Removed cluttered zone·state tags from Network nodes |
+| R2-19 | Netting has a Period filter |
+| R2-20/R2-21 | Netting "What is this?" panel explains where receipts, gross req, and planned orders come from |
+| R2-24 | Capacity chart now has TIME on the X-axis (one line per resource, utilisation % trend) |
+| R2-22 | **Honest note:** MRP is item-period level (BOM explosion aggregates across network) — it has no location dimension, so a location filter doesn't apply. Item + Period filters kept. Flagged rather than faked. |
+
+**Batch A remaining:** R2-5 (supplier filter — suppliers don't appear in the planning filters since they're a sourcing dimension, not item/location; will add to Sourcing tab filter), R2-28 (optimizer resource filter — already has item filter; will add resource).
+
+**Still queued — Batch B sessions:** B1 admin workspace, B2 inline edit + override + re-plan, B3 scenario selection, B4 user profile. Enhancements: R2-12/14 (cross-filter), R2-23 (MRP chart), R2-29/30 (optimizer drilldown+warnings), R2-37 (branding).

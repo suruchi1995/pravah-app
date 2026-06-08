@@ -52,10 +52,19 @@ export function Grid({ rows, columns, height = 520 }) {
       <AgGridReact
         rowData={rows || []}
         columnDefs={columns}
-        defaultColDef={{ sortable: true, filter: true, resizable: true, flex: 1, minWidth: 110 }}
+        defaultColDef={{
+          sortable: true,
+          filter: true,
+          resizable: true,
+          minWidth: 130,
+          flex: 1,
+          wrapHeaderText: true,       // header text wraps instead of truncating (R2-4)
+          autoHeaderHeight: true,     // header grows to fit wrapped text
+        }}
         pagination={true}
         paginationPageSize={20}
         animateRows={true}
+        onGridReady={params => { params.api.sizeColumnsToFit() }}
       />
     </div>
   )

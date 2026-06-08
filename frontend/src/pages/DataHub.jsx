@@ -1,25 +1,27 @@
 import { useState } from 'react'
 import { api } from '../api'
 import { useAsync, PageHeader, Grid, Loading, ErrorBox } from '../components/ui'
+import { FilterBar } from '../components/FilterBar'
 import { Upload, RotateCcw, Download, CheckCircle2, XCircle } from 'lucide-react'
 
 const TABS = [
-  { key: 'items_fg', label: 'Finished Goods' },
-  { key: 'items_rm', label: 'Raw Materials' },
-  { key: 'items_pm', label: 'Packaging' },
-  { key: 'items_sfg', label: 'Semi-Finished' },
-  { key: 'items', label: 'All Items' },
+  { key: 'items', label: 'Items' },
   { key: 'locations', label: 'Locations' },
   { key: 'suppliers', label: 'Suppliers' },
   { key: 'bom', label: 'BOM' },
-  { key: 'supplier_item_mapping', label: 'Supplier–Item' },
-  { key: 'supply_lanes', label: 'Supply Lanes' },
+  { key: 'sourcing', label: 'Sourcing & Lanes' },
   { key: 'inventory', label: 'Inventory' },
   { key: 'demand_history', label: 'Demand History' },
+  { key: 'resources', label: 'Resources' },
 ]
 
 const FRIENDLY_LABELS = {
   unit_price_or_cost: 'Price per Unit (₹)',
+  expiry_days: 'Shelf Life (days)',
+  item_type: 'Type',
+  from: 'From',
+  to: 'To',
+  kind: 'Relationship',
   lead_time_days: 'Lead Time (days)',
   min_lot_size: 'Min Lot Size',
   min_lot_uom: 'Min Lot UOM',
@@ -42,10 +44,32 @@ function friendlyCol(key) {
 }
 
 export default function DataHub() {
-  const [table, setTable] = useState('items_fg')
+  const [table, setTable] = useState('items')
   const [result, setResult] = useState(null)
   const [busy, setBusy] = useState(false)
-  const data = useAsync(() => api.master(table), [table, result])
+  const [filters, setFilters] = useState({ items: [], locations: [], periods: [] })
+
+  // "sourcing" tab merges supplier-item mapping + supply lanes into one view
+  const data = useAsync(async () => {
+    if (table === 'sourcing') {
+      const [sim, lanes] = await Promise.all([
+        api.master('supplier_item_mapping'), api.lanes(),
+      ])
+      // unify into one shape: source/from -> item -> to + transmode + lead + moq
+      const simRows = (sim || []).map(r => ({
+        item_code: r.item_code, from: r.supplier_code, to: '(plant)',
+        transport_mode: '—', lead_time_days: r.lead_time_days, moq: r.moq,
+        unit_price: r.unit_price, kind: 'Supplier→Item',
+      }))
+      const laneRows = (lanes || []).map(r => ({
+        item_code: r.item_code || '(all)', from: r.from_location, to: r.to_location,
+        transport_mode: r.transport_mode, lead_time_days: r.lead_time_days,
+        moq: r.min_lot_size, unit_price: null, kind: 'Lane',
+      }))
+      return [...laneRows, ...simRows]
+    }
+    return api.master(table)
+  }, [table, result])
 
   async function onFile(e) {
     const f = e.target.files?.[0]; if (!f) return
@@ -70,7 +94,29 @@ export default function DataHub() {
     } catch (err) { setBusy(false); setResult({ ok: false, errors: [{ sheet: '-', message: err.message }] }) }
   }
 
-  const rawCols = (data.data && data.data[0]) ? Object.keys(data.data[0]) : []
+  const allRows = data.data || []
+  // global Item/Location filter (R2-6) — applies to any tab that has those columns
+  const hasItem = allRows[0] && ('item_code' in allRows[0])
+  const hasLoc = allRows[0] && ('location_code' in allRows[0] || 'to' in allRows[0] || 'from' in allRows[0])
+  const rows = allRows.filter(r => {
+    if (filters.items?.length) {
+      const ic = r.item_code
+      if (ic && !filters.items.includes(ic)) return false
+    }
+    if (filters.locations?.length) {
+      const locVals = [r.location_code, r.to, r.from].filter(Boolean)
+      if (locVals.length && !locVals.some(v => filters.locations.includes(v))) return false
+    }
+    return true
+  })
+  const itemOpts = [...new Set(allRows.map(r => r.item_code).filter(Boolean))].sort()
+  const locOpts = [...new Set(allRows.flatMap(r => [r.location_code, r.to, r.from]).filter(Boolean))].sort()
+  const filterCfg = (hasItem || hasLoc) ? {
+    ...(hasItem ? { items: itemOpts } : {}),
+    ...(hasLoc ? { locations: locOpts } : {}),
+  } : null
+
+  const rawCols = (rows && rows[0]) ? Object.keys(rows[0]) : []
   const cols = rawCols.map(k => ({ field: k, headerName: friendlyCol(k) }))
 
   return (
@@ -111,13 +157,18 @@ export default function DataHub() {
         <div className="card p-5">
           <div className="flex gap-2 mb-4 flex-wrap">
             {TABS.map(t => (
-              <button key={t.key} onClick={() => setTable(t.key)}
+              <button key={t.key} onClick={() => { setTable(t.key); setFilters({ items: [], locations: [], periods: [] }) }}
                 className={`text-sm px-3 py-1.5 rounded-lg border ${table === t.key ? 'bg-brand text-white border-brand' : 'border-[#d6deea] text-slate2 hover:bg-mist'}`}>
                 {t.label}
               </button>
             ))}
           </div>
-          {data.loading ? <Loading /> : <Grid rows={data.data} columns={cols} height={480} />}
+          {filterCfg && (
+            <div className="mb-4 -mx-5">
+              <FilterBar config={filterCfg} value={filters} onChange={setFilters} />
+            </div>
+          )}
+          {data.loading ? <Loading /> : <Grid rows={rows} columns={cols} height={480} />}
         </div>
       </div>
     </>

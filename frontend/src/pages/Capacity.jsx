@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { api } from '../api'
 import { useAsync, PageHeader, Grid, Loading, ErrorBox, fmtPct } from '../components/ui'
 import { FilterBar, rowPasses } from '../components/FilterBar'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, Cell } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, Legend } from 'recharts'
+
+const COLORS = ['#2E5C8A', '#b5544a', '#5b8a72', '#c98a3c', '#7c5cbf', '#3c8c9c']
 
 export default function Capacity() {
   const { loading, data, error } = useAsync(() => api.capacity())
@@ -10,19 +12,24 @@ export default function Capacity() {
   if (loading) return <><PageHeader title="Capacity Planning" /><Loading /></>
   if (error) return <ErrorBox msg={error} />
 
-  // capacity rows use resource_code + period; build filter config for resource + period
   const cfg = {
     items: [...new Set(data.map(r => r.resource_code))].sort(),
     periods: [...new Set(data.map(r => r.period))].sort(),
   }
   const rows = data.filter(r => rowPasses(r, filters, { itemKey: 'resource_code', locKey: '_none', perKey: 'period' }))
 
+  // R2-24: time on X-axis. One line per resource, utilisation % over periods.
   const periods = [...new Set(rows.map(r => r.period))].sort()
-  const p0 = periods[0]
-  const first = rows.filter(r => r.period === p0).map(r => ({
-    resource: r.resource_code.replace('_LINE', '').replace('_01', '1').replace('_02', '2'),
-    util: Math.round(r.utilization * 100), status: r.constraint_status,
-  }))
+  const resources = [...new Set(rows.map(r => r.resource_code))].sort()
+  const chartData = periods.map(p => {
+    const row = { period: p.slice(0, 7) }
+    resources.forEach(res => {
+      const rec = rows.find(r => r.period === p && r.resource_code === res)
+      if (rec) row[res] = Math.round(rec.utilization * 100)
+    })
+    return row
+  })
+
   const barColor = s => s === 'OVERLOADED' ? '#b5544a' : s === 'TIGHT' ? '#c98a3c' : '#5b8a72'
   const statusCell = p => <span style={{ color: barColor(p.value), fontWeight: 600 }}>{p.value}</span>
   const cols = [
@@ -35,23 +42,24 @@ export default function Capacity() {
   ]
   return (
     <>
-      <PageHeader title="Capacity Planning" subtitle="Finite-capacity load by resource. The binding constraint sets the ceiling the optimizer must plan around." />
+      <PageHeader title="Capacity Planning" subtitle="Finite-capacity load over time. Above 100% = overloaded; that resource is the binding constraint the optimizer must plan around." />
       <FilterBar config={{ items: cfg.items, periods: cfg.periods }} value={filters} onChange={setFilters} />
       <div className="p-8 space-y-6">
         <div className="card p-6">
-          <h3 className="font-display text-xl mb-4">Resource utilisation — {p0?.slice(0,7)}</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={first} margin={{ left: 10, right: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eef2f6" vertical={false} />
-              <XAxis dataKey="resource" tick={{ fontSize: 11, fill: '#475569' }} />
-              <YAxis tick={{ fontSize: 12, fill: '#475569' }} tickFormatter={v => v + '%'} domain={[0, 'dataMax']} />
+          <h3 className="font-display text-xl mb-4">Utilisation over time — by resource</h3>
+          <ResponsiveContainer width="100%" height={320}>
+            <LineChart data={chartData} margin={{ left: 10, right: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#eef2f6" />
+              <XAxis dataKey="period" tick={{ fontSize: 11, fill: '#475569' }} />
+              <YAxis tick={{ fontSize: 12, fill: '#475569' }} tickFormatter={v => v + '%'} />
               <Tooltip formatter={v => v + '%'} />
-              <ReferenceLine y={100} stroke="#b5544a" strokeDasharray="4 4" label={{ value: 'capacity', fontSize: 11, fill: '#b5544a' }} />
+              <Legend />
+              <ReferenceLine y={100} stroke="#b5544a" strokeDasharray="4 4" label={{ value: 'capacity 100%', fontSize: 11, fill: '#b5544a' }} />
               <ReferenceLine y={85} stroke="#c98a3c" strokeDasharray="3 3" />
-              <Bar dataKey="util" radius={[5,5,0,0]}>
-                {first.map((e, i) => <Cell key={i} fill={barColor(e.status)} />)}
-              </Bar>
-            </BarChart>
+              {resources.map((res, i) => (
+                <Line key={res} type="monotone" dataKey={res} stroke={COLORS[i % COLORS.length]} strokeWidth={2} dot={{ r: 3 }} />
+              ))}
+            </LineChart>
           </ResponsiveContainer>
         </div>
         <div className="card p-5"><Grid rows={rows} columns={cols} /></div>
