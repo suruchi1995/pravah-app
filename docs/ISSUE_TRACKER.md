@@ -352,3 +352,33 @@ R2-28 (optimizer resource filter), R2-35 (sidebar collapsible desktop), R2-36 (c
 - ✅ B4 — User profile page
 
 **Remaining enhancements (post Batch B):** R2-12/14 (cross-filter linking), R2-23 (MRP chart), R2-27 full (optimizer resource editing done; drilldown next), R2-29/30 (optimizer resource drilldown + over/under-use warnings), R2-37 (branding polish), R2-31 (copilot feedback), R2-5 (supplier filter on Sourcing tab), R2-26b (true per-scenario downstream re-plan).
+
+---
+
+## SMOKE TEST RESULTS (Claude, pre-retest) — 2026-06
+
+Performed a full backend + flow smoke test on a clean Postgres instance after reset-demo.
+
+### ✅ What passed (zero defects found)
+- **All page data endpoints** load valid, non-empty data: Dashboard, Data Hub (all 9 tabs), Network, Segmentation (40 rows), Forecast, Inventory, Netting, MRP, Capacity (line data), Optimizer (3 scenarios), Capabilities.
+- **All interactive flows** work end-to-end:
+  - Admin login → create user (auto temp password generated) ✅
+  - Planner login → submit demand override on Handshake ✅
+  - Planner CANNOT approve own request (403) ✅
+  - Approver approves → change applies + pipeline re-plans ✅
+  - Field edit (expiry/MOQ) → approve → value applied ✅
+  - Change password ✅
+- **Data consistency:** handshake gap = max(0, demand−supply) and fill = supply/demand verified self-consistent across all cells; segmentation has all fields the UI needs (incl. location_code, supply_ci); items carry expiry_days; optimizer scenarios all have plan+status.
+- **Frontend builds clean** (`✓ built`), no undefined refs, the earlier Handshake `ovConfirm` bug confirmed gone, scenario context wired on every page that uses it.
+
+### ⚠️ Limitation of this smoke test (honest)
+I tested the **data + logic + build** layers, NOT the rendered browser UI. I cannot verify purely visual behaviour. Please pay attention to these during retest (NOT yet confirmed defects — areas to eyeball):
+- **S-1** Capacity chart: now a multi-line "utilisation over time" chart. With several resources the legend/lines may be busy — check readability.
+- **S-2** Network SVG: renders from live node/lane data; confirm it actually draws (was the R2-11 blank-page victim before).
+- **S-3** Data Hub "Sourcing & Lanes" tab: merges two datasets client-side — confirm rows look right and columns are labelled.
+- **S-4** Global scenario bar: confirm it appears on Dashboard/Handshake/Netting/MRP/Capacity/Optimizer and that switching persists across navigation.
+- **S-5** Override & field-edit modals: confirm the two-step flow (builder → confirm) opens and closes cleanly on a real screen.
+- **S-6** Forced password change: confirm the first-login flow shows the "set new password" screen (logic verified; UI not eyeballed).
+- **S-7** Sidebar desktop collapse + mobile drawer: confirm the chevron collapse and mobile hamburger both behave.
+
+### No new backend defects logged — backend/logic/build are clean as of this smoke test.
