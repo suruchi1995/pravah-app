@@ -44,6 +44,7 @@ class Item(TenantMixin, Base):
     category: Mapped[str] = mapped_column(String(32))
     uom: Mapped[str] = mapped_column(String(8))
     unit_price_or_cost: Mapped[float | None] = mapped_column(Float, nullable=True)
+    expiry_days: Mapped[int | None] = mapped_column(Integer, nullable=True)  # shelf life; null = non-perishable
 
 
 class Location(TenantMixin, Base):
@@ -194,11 +195,15 @@ class ProductSegmentation(TenantMixin, Base):
     __tablename__ = "product_segmentation"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     item_code: Mapped[str] = mapped_column(String(32), index=True)
-    abc_class: Mapped[str] = mapped_column(String(2))
-    xyz_class: Mapped[str] = mapped_column(String(2))
-    abc_xyz: Mapped[str] = mapped_column(String(4))
+    location_code: Mapped[str] = mapped_column(String(32), default="ALL", index=True)
+    abc_class: Mapped[str] = mapped_column(String(4))
+    xyz_class: Mapped[str] = mapped_column(String(4))
+    abc_xyz: Mapped[str] = mapped_column(String(8))
     annual_value: Mapped[float] = mapped_column(Float)
-    cov: Mapped[float] = mapped_column(Float)       # coefficient of variation
+    cov: Mapped[float] = mapped_column(Float)
+    supply_ci: Mapped[str] = mapped_column(String(8), default="LOW")
+    avg_fill_rate: Mapped[float] = mapped_column(Float, default=1.0)
+    supplier_reliability: Mapped[float] = mapped_column(Float, default=1.0)
     reasoning: Mapped[str] = mapped_column(String())
 
 
@@ -328,6 +333,18 @@ class SolverExplanation(TenantMixin, Base):
     objective_value: Mapped[float] = mapped_column(Float)
     status: Mapped[str] = mapped_column(String(32))
     reasoning: Mapped[str] = mapped_column(String())
+
+
+class UomConversion(TenantMixin, Base):
+    """Unit-of-measure conversion table. Seeded with standard conversions;
+    clients can add their own in the upload template.
+    factor: multiply qty in from_uom by factor to get qty in to_uom."""
+    __tablename__ = "uom_conversions"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    from_uom: Mapped[str] = mapped_column(String(16), index=True)
+    to_uom: Mapped[str] = mapped_column(String(16), index=True)
+    factor: Mapped[float] = mapped_column(Float)
+    notes: Mapped[str] = mapped_column(String(), default="")
 
 
 class SupplyLane(TenantMixin, Base):

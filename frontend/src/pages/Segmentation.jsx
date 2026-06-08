@@ -14,7 +14,10 @@ export default function Segmentation() {
   if (error) return <ErrorBox msg={error} />
 
   const cfg = deriveOptions(data, { item: true, location: false, period: false })
-  const rows = data.filter(r => rowPasses(r, filters))
+  // The engine now returns both item-level summary rows (location='ALL') and
+  // item-location rows. Use the ALL rows for the item-level charts/matrix.
+  const itemRows = (data || []).filter(r => r.location_code === 'ALL')
+  const rows = itemRows.filter(r => rowPasses(r, filters))
 
   // ABC bar chart data
   const abcData = ['A','B','C'].map(cls => ({

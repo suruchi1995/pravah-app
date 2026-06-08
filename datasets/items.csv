@@ -1,38 +1,38 @@
-tenant_id,item_code,description,item_type,category,uom,unit_price_or_cost,created_at,updated_at
-apex,FG001,Whey Protein 1kg,FG,Protein,ea,2499,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,FG002,Mass Gainer 3kg,FG,Protein,ea,2999,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,FG003,Fish Oil 90caps,FG,Wellness,ea,799,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,FG004,Multivitamin 60tab,FG,Wellness,ea,599,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,FG005,Creatine 250g,FG,Performance,ea,1099,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,FG006,Pre Workout 300g,FG,Performance,ea,1499,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,FG007,BCAA 400g,FG,Performance,ea,1299,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,FG008,Omega 3 120caps,FG,Wellness,ea,999,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,FG009,Vitamin D 60tab,FG,Wellness,ea,399,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,FG010,Electrolyte Mix 500g,FG,Hydration,ea,699,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,SFG001,Protein Base Blend (bulk),SFG,Intermediate,kg,,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,SFG002,Capsule Oil Base (bulk),SFG,Intermediate,L,,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,RM001,Whey Protein Concentrate,RM,Ingredient,kg,480,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,RM002,Whey Protein Isolate,RM,Ingredient,kg,720,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,RM003,Maltodextrin,RM,Ingredient,kg,95,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,RM004,Cocoa Powder,RM,Ingredient,kg,320,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,RM005,Creatine Monohydrate,RM,Ingredient,kg,1100,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,RM006,Caffeine Anhydrous,RM,Ingredient,kg,1800,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,RM007,Beta Alanine,RM,Ingredient,kg,1500,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,RM008,L-Leucine,RM,Ingredient,kg,1300,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,RM009,L-Isoleucine,RM,Ingredient,kg,1250,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,RM010,L-Valine,RM,Ingredient,kg,1250,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,RM011,Fish Oil Concentrate,RM,Ingredient,L,640,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,RM012,Vitamin D3 Premix,RM,Ingredient,kg,2200,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,RM013,Multivitamin Premix,RM,Ingredient,kg,980,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,RM014,Citric Acid,RM,Ingredient,kg,110,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,RM015,Sodium/Potassium Salts,RM,Ingredient,kg,130,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,RM016,Natural Flavour Blend,RM,Ingredient,kg,850,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,RM017,Sucralose Sweetener,RM,Ingredient,kg,1400,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,RM018,Gelatin (capsule),RM,Ingredient,kg,540,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,RM019,Glycerin,RM,Ingredient,L,180,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,RM020,Anti-caking Agent,RM,Ingredient,kg,240,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,PM001,Jar 1kg (HDPE),PM,Packaging,ea,28,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,PM002,Jar 3kg (HDPE),PM,Packaging,ea,52,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,PM003,Bottle 90/120 caps,PM,Packaging,ea,14,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,PM004,Label (printed),PM,Packaging,ea,3,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
-apex,PM005,Shipper Carton,PM,Packaging,ea,18,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+tenant_id,item_code,description,item_type,category,uom,unit_price_or_cost,expiry_days,created_at,updated_at
+apex,FG001,Whey Protein 1kg,FG,Protein,ea,2499,730,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,FG002,Mass Gainer 3kg,FG,Protein,ea,2999,545,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,FG003,Fish Oil 90caps,FG,Wellness,ea,799,730,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,FG004,Multivitamin 60tab,FG,Wellness,ea,599,545,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,FG005,Creatine 250g,FG,Performance,ea,1099,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,FG006,Pre Workout 300g,FG,Performance,ea,1499,545,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,FG007,BCAA 400g,FG,Performance,ea,1299,730,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,FG008,Omega 3 120caps,FG,Wellness,ea,999,545,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,FG009,Vitamin D 60tab,FG,Wellness,ea,399,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,FG010,Electrolyte Mix 500g,FG,Hydration,ea,699,730,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,SFG001,Protein Base Blend (bulk),SFG,Intermediate,kg,,90,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,SFG002,Capsule Oil Base (bulk),SFG,Intermediate,L,,90,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,RM001,Whey Protein Concentrate,RM,Ingredient,kg,480,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,RM002,Whey Protein Isolate,RM,Ingredient,kg,720,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,RM003,Maltodextrin,RM,Ingredient,kg,95,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,RM004,Cocoa Powder,RM,Ingredient,kg,320,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,RM005,Creatine Monohydrate,RM,Ingredient,kg,1100,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,RM006,Caffeine Anhydrous,RM,Ingredient,kg,1800,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,RM007,Beta Alanine,RM,Ingredient,kg,1500,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,RM008,L-Leucine,RM,Ingredient,kg,1300,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,RM009,L-Isoleucine,RM,Ingredient,kg,1250,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,RM010,L-Valine,RM,Ingredient,kg,1250,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,RM011,Fish Oil Concentrate,RM,Ingredient,L,640,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,RM012,Vitamin D3 Premix,RM,Ingredient,kg,2200,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,RM013,Multivitamin Premix,RM,Ingredient,kg,980,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,RM014,Citric Acid,RM,Ingredient,kg,110,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,RM015,Sodium/Potassium Salts,RM,Ingredient,kg,130,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,RM016,Natural Flavour Blend,RM,Ingredient,kg,850,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,RM017,Sucralose Sweetener,RM,Ingredient,kg,1400,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,RM018,Gelatin (capsule),RM,Ingredient,kg,540,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,RM019,Glycerin,RM,Ingredient,L,180,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,RM020,Anti-caking Agent,RM,Ingredient,kg,240,365,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,PM001,Jar 1kg (HDPE),PM,Packaging,ea,28,,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,PM002,Jar 3kg (HDPE),PM,Packaging,ea,52,,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,PM003,Bottle 90/120 caps,PM,Packaging,ea,14,,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,PM004,Label (printed),PM,Packaging,ea,3,,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z
+apex,PM005,Shipper Carton,PM,Packaging,ea,18,,2026-05-31T00:00:00Z,2026-05-31T00:00:00Z

@@ -174,3 +174,59 @@
 - Resource data (lines, hours) should come from users via Data Hub.
   Currently it's in the dataset but not editable in the UI.
   Make it editable in Data Hub (like parameters).
+
+
+---
+
+## DECISIONS LOCKED (2026-06-07)
+
+| Issue | Decision |
+|-------|----------|
+| R2-1a / R2-33 | Full `/admin` screen: user list, add-user form, role picker, auto-generated temp password, user changes password on first login |
+| R2-2 / R2-2a | **Planner** role can edit MOQ/expiry/lead-time/params in UI. "Update & Re-plan" button → goes through approval workflow; applies + re-plans only AFTER approval |
+| R2-3 | Demand override directly on Demand-Supply (Handshake) screen; same approval-gated re-plan button; replan covers steps after demand |
+| R2-10 | Add `expiry_days` column to items table |
+| R2-15 | Handshake explanation is for Suruchi's understanding only — NOT a UI change |
+| R2-18 | Sidebar shows planning flow order explicitly |
+| R2-25 / R2-26 | User selects scenario → ALL downstream pages reflect it (global selected_scenario the engines read) |
+| R2-34 | User profile page: user info, changes made, approvals, change password, roles |
+
+## WORK PLAN — split agreed
+
+### BATCH A — building now (one push)
+🔴 R2-1/R2-32 (auth blank pages), 🔴 R2-11 (network not rendering),
+🟡 R2-4 (column headers/resize), R2-5 (supplier filter), R2-6/R2-7 (data hub filters + dropdowns),
+R2-8 (combine items tab + type column), R2-9 (lanes+supplier-item one tab, fix empty, add transmode),
+R2-10 (expiry_days), R2-13 (remove DC clutter), R2-18 (sidebar flow order),
+R2-19 (netting filter hierarchy), R2-22 (MRP location filter), R2-24 (capacity time axis + filters),
+R2-28 (optimizer resource filter), R2-35 (sidebar collapsible desktop), R2-36 (company name in UI)
+
+### BATCH B — separate focused sessions (too important to rush)
+- **Session B1:** R2-1a/R2-33 — Admin workspace (user management screen + API)
+- **Session B2:** R2-2/R2-2a + R2-3 — Inline field editing + demand override + approval-gated re-plan
+- **Session B3:** R2-25/R2-26 — Global scenario selection across all pages
+- **Session B4:** R2-34 — User profile page
+
+### Also pending (need input / later)
+- R2-20/R2-21 (netting explanations), R2-23 (MRP chart), R2-27 (resource editable — part of B2),
+  R2-29/R2-30 (optimizer resource drilldown + warnings), R2-12/R2-14 (cross-filter linking),
+  R2-31 (copilot feedback), R2-37 (branding)
+
+
+---
+
+## BATCH A — BUILT & PUSHED (awaiting Suruchi retest)
+
+| Issue | What was fixed |
+|-------|----------------|
+| R2-1 / R2-32 | Login now standalone page (no layout conflict). Approvals handles no-token/401 gracefully with a "sign in required" gate instead of blank page. Approval workspace gated to logged-in users. |
+| R2-11 | **Root cause: a syntax error in supply_mrp.py crashed the whole backend on import → every page blank.** Fixed. Network now renders with lanes. |
+| R2-10 | expiry_days added to items (FG 18-24mo, RM 12mo, perishables realistic). Optional on upload. |
+| R2-18 | Sidebar now grouped: Dashboard/Data/Network, then "Planning flow" (1·Segmentation → 8·Optimizer numbered), then Tools. |
+| R2-35 | Sidebar collapsible on desktop (chevron toggle), not just mobile. |
+| R2-36 | Company name (Apex Nutraceuticals) shown under Pravah logo in sidebar. |
+| R2-15/16 (partial) | Segmentation engine now produces item-LOCATION level rows (3-axis: ABC + Predictability + Supply CI) + item summaries. 40 rows. |
+
+**Still in Batch A queue (next sub-push):** R2-4 (column resize), R2-5 (supplier filter), R2-6/7 (data hub filters), R2-8 (combine items tab), R2-9 (lanes+supplier-item tab), R2-13 (remove clutter), R2-19/22/24/28 (page filters).
+
+**Note:** Batch A turned out larger than one push. Auth blockers + network blocker + sidebar + expiry + segmentation engine done first (most critical). Remaining UI-filter items in next push.

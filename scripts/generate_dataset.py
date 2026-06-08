@@ -158,16 +158,18 @@ NOW = "2026-05-31T00:00:00Z"
 # --------------------------------------------------------------------------
 def build_items():
     rows = []
-    for code, name, cat, *_ , price in [(*fg,) for fg in FINISHED_GOODS]:
-        rows.append([TENANT_ID, code, name, "FG", cat, "ea", price, NOW, NOW])
+    # FGs are perishable nutraceuticals — realistic shelf life 18-24 months
+    fg_expiry = {0:730, 1:545, 2:730, 3:545, 4:365, 5:545, 6:730, 7:545, 8:365, 9:730}
+    for idx, (code, name, cat, *_ , price) in enumerate([(*fg,) for fg in FINISHED_GOODS]):
+        rows.append([TENANT_ID, code, name, "FG", cat, "ea", price, fg_expiry.get(idx, 545), NOW, NOW])
     for code, name, uom in SEMI_FINISHED:
-        rows.append([TENANT_ID, code, name, "SFG", "Intermediate", uom, "", NOW, NOW])
+        rows.append([TENANT_ID, code, name, "SFG", "Intermediate", uom, "", 90, NOW, NOW])
     for code, name, uom, cost in RAW_MATERIALS:
-        rows.append([TENANT_ID, code, name, "RM", "Ingredient", uom, cost, NOW, NOW])
+        rows.append([TENANT_ID, code, name, "RM", "Ingredient", uom, cost, 365, NOW, NOW])
     for code, name, uom, cost in PACKAGING:
-        rows.append([TENANT_ID, code, name, "PM", "Packaging", uom, cost, NOW, NOW])
+        rows.append([TENANT_ID, code, name, "PM", "Packaging", uom, cost, "", NOW, NOW])
     return write_csv("items.csv",
-        ["tenant_id","item_code","description","item_type","category","uom","unit_price_or_cost","created_at","updated_at"],
+        ["tenant_id","item_code","description","item_type","category","uom","unit_price_or_cost","expiry_days","created_at","updated_at"],
         rows)
 
 # --------------------------------------------------------------------------

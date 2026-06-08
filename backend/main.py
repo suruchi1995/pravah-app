@@ -273,8 +273,9 @@ def segmentation(tenant: str = Query(DEFAULT_TENANT)):
     _ensure_seeded(tenant)
     with Session() as s:
         rows = s.query(m.ProductSegmentation).filter_by(tenant_id=tenant).all()
-        return rows_to_dicts(rows, ["item_code", "abc_class", "xyz_class", "abc_xyz",
-                                    "annual_value", "cov", "reasoning"])
+        return rows_to_dicts(rows, ["item_code", "location_code", "abc_class", "xyz_class",
+                                    "abc_xyz", "annual_value", "cov", "supply_ci",
+                                    "avg_fill_rate", "supplier_reliability", "reasoning"])
 
 
 @app.get("/api/forecast")
@@ -366,7 +367,7 @@ def master(table: str, tenant: str = Query(DEFAULT_TENANT)):
     _ensure_seeded(tenant)
     table_map = {
         "items": (m.Item, ["item_code", "description", "item_type", "category", "uom",
-                           "unit_price_or_cost"]),
+                           "unit_price_or_cost", "expiry_days"]),
         "items_fg": None,   # special filtered views
         "items_rm": None,
         "items_pm": None,
@@ -398,7 +399,7 @@ def master(table: str, tenant: str = Query(DEFAULT_TENANT)):
         with Session() as s:
             rows = s.query(m.Item).filter_by(tenant_id=tenant, item_type=itype).all()
             return rows_to_dicts(rows, ["item_code", "description", "item_type",
-                                        "category", "uom", "unit_price_or_cost"])
+                                        "category", "uom", "unit_price_or_cost", "expiry_days"])
 
     model, fields = table_map[table]
     with Session() as s:

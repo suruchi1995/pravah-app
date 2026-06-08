@@ -20,7 +20,7 @@ ssn = Session()
 load(ssn)
 res = run_pipeline(ssn)
 
-check("segmentation covers 10 FGs", res["Segmentation"] == 10, res["Segmentation"])
+check("segmentation: 10 item-summaries + 30 item-location = 40", res["Segmentation"] == 40, res["Segmentation"])
 check("forecast 30 series x 6 months = 180", res["Forecasting"] == 180, res["Forecasting"])
 check("demand plan 180 rows", res["Demand Plan"] == 180)
 check("inventory targets 30", res["Inventory Targets"] == 30)

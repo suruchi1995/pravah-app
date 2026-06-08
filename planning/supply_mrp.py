@@ -48,8 +48,23 @@ def run(session, tenant=DEFAULT_TENANT):
     bom = session.query(m.Bom).filter_by(tenant_id=tenant).all()
     bom_pairs = [(b.parent_item, b.component_item) for b in bom]
     usage = defaultdict(dict)  # parent -> {component: qty}
+    # build item UOM map and conversion map for checking
+    item_uom = {i.item_code: i.uom for i in session.query(m.Item).filter_by(tenant_id=tenant)}
+    from backend.uom import build_conversion_map
+    conv_map = build_conversion_map(session, tenant)
+    uom_warnings = []
     for b in bom:
-        usage[b.parent_item][b.component_item] = b.usage_qty
+        qty = b.usage_qty
+        p_uom = item_uom.get(b.parent_item, 'ea')
+        c_uom = item_uom.get(b.component_item, 'ea')
+        # BOM quantities are in component UOM per 1 parent unit — no conversion needed
+        # BUT flag if parent and component are in incompatible UOM families
+        if p_uom != c_uom:
+            from backend.uom import convert
+            _, ok, warn = convert(1.0, c_uom, p_uom, conv_map)
+            if not ok:
+                uom_warnings.append(f"BOM {b.parent_item}({p_uom}) -> {b.component_item}({c_uom}): {warn}")
+        usage[b.parent_item][b.component_item] = qty
 
     levels = _topo_levels(bom_pairs, list(items.keys()))
     max_level = max(levels.values()) if levels else 0

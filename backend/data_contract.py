@@ -14,6 +14,7 @@ CONTRACT = {
     "items": {
         "required": True,
         "columns": ["item_code", "description", "item_type", "category", "uom", "unit_price_or_cost"],
+        "optional_columns": ["expiry_days"],
         "key_cols": ["item_code"],
         "numeric_cols": ["unit_price_or_cost"],
         "nullable_numeric": ["unit_price_or_cost"],  # SFG/intermediates may have blank price
@@ -96,6 +97,11 @@ CONTRACT = {
         "required": False,
         "columns": ["item_code", "min_months_cover", "max_months_cover"],
         "key_cols": ["item_code"], "numeric_cols": ["min_months_cover", "max_months_cover"],
+    },
+    "uom_conversions": {
+        "required": False,
+        "columns": ["from_uom","to_uom","factor","notes"],
+        "key_cols": ["from_uom","to_uom"], "numeric_cols": ["factor"],
     },
     "supply_lanes": {
         "required": False,

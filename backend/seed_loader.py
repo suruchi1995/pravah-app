@@ -26,7 +26,8 @@ LOADERS = [
     ("items.csv", m.Item, {
         "item_code": ("item_code", s), "description": ("description", s),
         "item_type": ("item_type", s), "category": ("category", s),
-        "uom": ("uom", s), "unit_price_or_cost": ("unit_price_or_cost", f)}),
+        "uom": ("uom", s), "unit_price_or_cost": ("unit_price_or_cost", f),
+        "expiry_days": ("expiry_days", lambda x: int(float(x)) if x not in ("", None) else None)}),
     ("locations.csv", m.Location, {
         "location_code": ("location_code", s), "location_name": ("location_name", s),
         "location_type": ("location_type", s), "state": ("state", s), "zone": ("zone", s)}),

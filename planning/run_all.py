@@ -13,7 +13,9 @@ from optimization import production_optimizer
 
 def run_pipeline(session, tenant=DEFAULT_TENANT):
     from backend.parameters import seed_parameters
-    seed_parameters(session, tenant)   # ensure all tunables exist as data first
+    from backend.uom import seed_conversions
+    seed_parameters(session, tenant)
+    seed_conversions(session, tenant)   # ensure all tunables exist as data first
     steps = [
         ("Segmentation",      segmentation.run),
         ("Forecasting",       forecasting.run),
