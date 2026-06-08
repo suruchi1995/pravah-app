@@ -265,3 +265,20 @@ R2-28 (optimizer resource filter), R2-35 (sidebar collapsible desktop), R2-36 (c
 **Frontend:** Admin.jsx (gated to admin role), Login.jsx now handles forced password change, Admin added to sidebar Tools group.
 
 **Next Batch B sessions:** B2 (inline edit + override + approval-gated re-plan), B3 (scenario selection), B4 (user profile page).
+
+---
+
+## BATCH B2 — Inline editing + demand override + approval-gated re-plan — BUILT & PUSHED
+
+| Issue | What was built |
+|-------|----------------|
+| R2-3 | "Override demand" button on the Demand–Supply (Handshake) screen → builder modal (item/DC/period/uplift%/absolute/reason) → approval-gated submit. |
+| R2-2 | "Edit a field" on Data Hub for editable master data — items (price, expiry), suppliers (lead time, MOQ, reliability), supplier-item (price, MOQ, lead time), resources (capacity). Planner/admin only. |
+| R2-2a | All edits + overrides go through the approval workflow. On approval, the change applies AND the pipeline re-runs automatically ("replanned": true). Planner cannot approve own request. |
+| R2-27 (partial) | Resource capacity (hours_per_month) is now editable via the same field-edit flow. |
+
+**Backend:** `field_edit` change type added to `_apply_change` (MODEL_MAP: items/suppliers/resources/supplier_item_mapping/supply_lanes; numeric casting; safe attr check). Approve endpoint already re-plans. 4/4 B2 backend checks + 85 core checks pass on clean Postgres.
+**Frontend:** reusable `ChangeRequestModal` + `canEditData()` helper; override builder on Handshake; field editor on Data Hub.
+
+**Remaining Batch B:** B3 (global scenario selection R2-25/26), B4 (user profile page R2-34).
+**Remaining enhancements:** R2-12/14 (cross-filter), R2-23 (MRP chart), R2-29/30 (optimizer resource drilldown + over/under-use warnings), R2-37 (branding polish), R2-31 (copilot feedback), R2-5 (supplier filter on Sourcing tab).

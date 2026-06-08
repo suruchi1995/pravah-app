@@ -565,6 +565,26 @@ def _apply_change(s, cr, tenant):
                 override_qty=payload["override_qty"],
                 override_type=payload.get("override_type", "absolute"),
                 reason=payload.get("reason", ""), source="planner"))
+    elif cr.change_type == "field_edit":
+        # edit a single field on a master-data row (MOQ, lead_time, expiry_days, etc.)
+        # payload: {table, key_field, key_value, field, value}
+        MODEL_MAP = {
+            "items": m.Item, "suppliers": m.Supplier, "resources": m.Resource,
+            "supplier_item_mapping": m.SupplierItemMapping, "supply_lanes": m.SupplyLane,
+        }
+        model = MODEL_MAP.get(payload["table"])
+        if model is not None:
+            row = s.query(model).filter_by(
+                tenant_id=tenant, **{payload["key_field"]: payload["key_value"]}).first()
+            if row is not None and hasattr(row, payload["field"]):
+                val = payload["value"]
+                try:
+                    cur = getattr(row, payload["field"])
+                    if isinstance(cur, (int, float)) or cur is None:
+                        val = float(val) if val not in (None, "") else None
+                except (ValueError, TypeError):
+                    pass
+                setattr(row, payload["field"], val)
     s.commit()
 
 

@@ -2,7 +2,16 @@ import { useState } from 'react'
 import { api } from '../api'
 import { useAsync, PageHeader, Grid, Loading, ErrorBox } from '../components/ui'
 import { FilterBar } from '../components/FilterBar'
-import { Upload, RotateCcw, Download, CheckCircle2, XCircle } from 'lucide-react'
+import { ChangeRequestModal, canEditData } from '../components/ChangeRequestModal'
+import { Upload, RotateCcw, Download, CheckCircle2, XCircle, Pencil } from 'lucide-react'
+
+// which fields are editable per table (R2-2: planner-editable master data)
+const EDITABLE = {
+  items: { key: 'item_code', fields: ['unit_price_or_cost', 'expiry_days'] },
+  suppliers: { key: 'supplier_code', fields: ['lead_time_days', 'moq', 'reliability'] },
+  supplier_item_mapping: { key: 'item_code', fields: ['unit_price', 'moq', 'lead_time_days'] },
+  resources: { key: 'resource_code', fields: ['hours_per_month'] },
+}
 
 const TABS = [
   { key: 'items', label: 'Items' },
@@ -48,6 +57,10 @@ export default function DataHub() {
   const [result, setResult] = useState(null)
   const [busy, setBusy] = useState(false)
   const [filters, setFilters] = useState({ items: [], locations: [], periods: [] })
+  // field-edit state (R2-2)
+  const [editOpen, setEditOpen] = useState(false)
+  const [edit, setEdit] = useState({ key_value: '', field: '', value: '' })
+  const editable = canEditData()
 
   // "sourcing" tab merges supplier-item mapping + supply lanes into one view
   const data = useAsync(async () => {
@@ -155,13 +168,19 @@ export default function DataHub() {
         )}
 
         <div className="card p-5">
-          <div className="flex gap-2 mb-4 flex-wrap">
+          <div className="flex gap-2 mb-4 flex-wrap items-center">
             {TABS.map(t => (
               <button key={t.key} onClick={() => { setTable(t.key); setFilters({ items: [], locations: [], periods: [] }) }}
                 className={`text-sm px-3 py-1.5 rounded-lg border ${table === t.key ? 'bg-brand text-white border-brand' : 'border-[#d6deea] text-slate2 hover:bg-mist'}`}>
                 {t.label}
               </button>
             ))}
+            {EDITABLE[table] && editable && (
+              <button onClick={() => { setEdit({ key_value: '', field: EDITABLE[table].fields[0], value: '' }); setEditOpen(true) }}
+                className="ml-auto flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-brand text-brand hover:bg-brand/5">
+                <Pencil size={14} /> Edit a field
+              </button>
+            )}
           </div>
           {filterCfg && (
             <div className="mb-4 -mx-5">
@@ -170,6 +189,44 @@ export default function DataHub() {
           )}
           {data.loading ? <Loading /> : <Grid rows={rows} columns={cols} height={480} />}
         </div>
+
+        {/* Edit-field builder (R2-2) */}
+        {editOpen && !edit._confirm && EDITABLE[table] && (
+          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setEditOpen(false)}>
+            <div className="card p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
+              <h3 className="font-display text-xl mb-1">Edit a field</h3>
+              <p className="text-xs text-slate2 mb-4">Pick a record and field. Your change is approval-gated — it applies and re-plans only after sign-off.</p>
+              <div className="space-y-3">
+                <select value={edit.key_value} onChange={e => setEdit(x => ({ ...x, key_value: e.target.value }))} className="w-full text-sm border border-[#d6deea] rounded-lg px-3 py-2">
+                  <option value="">Select {EDITABLE[table].key}…</option>
+                  {[...new Set(allRows.map(r => r[EDITABLE[table].key]).filter(Boolean))].map(v => <option key={v}>{v}</option>)}
+                </select>
+                <select value={edit.field} onChange={e => setEdit(x => ({ ...x, field: e.target.value }))} className="w-full text-sm border border-[#d6deea] rounded-lg px-3 py-2">
+                  {EDITABLE[table].fields.map(f => <option key={f} value={f}>{friendlyCol(f)}</option>)}
+                </select>
+                <input type="number" value={edit.value} onChange={e => setEdit(x => ({ ...x, value: e.target.value }))}
+                  placeholder="New value" className="w-full text-sm border border-[#d6deea] rounded-lg px-3 py-2" />
+                <button disabled={!edit.key_value || edit.value === ''} onClick={() => setEdit(x => ({ ...x, _confirm: true }))}
+                  className="w-full text-sm py-2.5 rounded-lg bg-brand text-white hover:bg-branddk disabled:opacity-50">
+                  Review &amp; submit
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        <ChangeRequestModal
+          open={!!(editOpen && edit._confirm && EDITABLE[table])}
+          onClose={() => { setEditOpen(false); setEdit({ key_value: '', field: '', value: '' }) }}
+          title="Submit field change"
+          canEdit={editable}
+          change={EDITABLE[table] ? {
+            change_type: 'field_edit',
+            target: `${table}: ${edit.key_value} · ${friendlyCol(edit.field)}`,
+            payload: { table, key_field: EDITABLE[table].key, key_value: edit.key_value, field: edit.field, value: edit.value },
+            old_value: String(allRows.find(r => r[EDITABLE[table].key] === edit.key_value)?.[edit.field] ?? ''),
+            new_value: String(edit.value),
+          } : {}}
+        />
       </div>
     </>
   )
